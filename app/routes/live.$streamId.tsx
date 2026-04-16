@@ -92,8 +92,18 @@ function LiveVideoPlayer({
   viewer: ReturnType<typeof useWebRTCViewer>;
   hostUser: any;
 }) {
-  // Chat-only mode — no video player
-  if (mediaType === "none") return null;
+  // Still loading stream data — show loading placeholder
+  if (mediaType === "none") {
+    // Check if stream is still loading (not chat-only)
+    return (
+      <div className="relative w-full bg-black/90 overflow-hidden flex-shrink-0" style={{ aspectRatio: "16/9", maxHeight: "40vh" }}>
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+          <IconRadio size={24} className="text-white/30 animate-pulse" />
+          <p className="text-[11px] text-white/30">Loading stream...</p>
+        </div>
+      </div>
+    );
+  }
 
   const aspectRatio = mediaType === "camera" ? "4/3" : "16/9";
 
@@ -343,21 +353,19 @@ export default function LiveStreamPage() {
   const { streamId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const {
-    currentStream,
-    messages,
-    viewers,
-    fetchStream,
-    fetchMessages,
-    fetchViewers,
-    joinStream,
-    sendMessage,
-    pinMessage,
-    unpinMessage,
-    endStream,
-    subscribeToStream,
-    unsubscribe,
-  } = useLiveStore();
+  const currentStream = useLiveStore((s) => s.currentStream);
+  const messages = useLiveStore((s) => s.messages);
+  const viewers = useLiveStore((s) => s.viewers);
+  const fetchStream = useLiveStore((s) => s.fetchStream);
+  const fetchMessages = useLiveStore((s) => s.fetchMessages);
+  const fetchViewers = useLiveStore((s) => s.fetchViewers);
+  const joinStream = useLiveStore((s) => s.joinStream);
+  const sendMessage = useLiveStore((s) => s.sendMessage);
+  const pinMessage = useLiveStore((s) => s.pinMessage);
+  const unpinMessage = useLiveStore((s) => s.unpinMessage);
+  const endStream = useLiveStore((s) => s.endStream);
+  const subscribeToStream = useLiveStore((s) => s.subscribeToStream);
+  const unsubscribe = useLiveStore((s) => s.unsubscribe);
 
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -369,6 +377,11 @@ export default function LiveStreamPage() {
   const isEnded = currentStream?.status === "ended";
   const pinnedMessage = messages.find((m) => m.is_pinned);
   const mediaType: MediaSourceType = (currentStream?.media_type as MediaSourceType) ?? "none";
+
+  // Debug: log stream state
+  useEffect(() => {
+    console.log('[LiveStream] currentStream:', currentStream?.id, 'mediaType:', currentStream?.media_type, 'isHost:', currentStream?.user_id === user?.id);
+  }, [currentStream, user?.id]);
 
   // WebRTC hooks
   const host = useWebRTCHost(streamId, user?.id, isHost);
