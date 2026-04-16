@@ -20,9 +20,9 @@ export function meta({}: Route.MetaArgs) {
 export default function Login() {
   const { login, isLoading, error, clearError, isAuthenticated, user, updateProfile, logout } = useAuthStore();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
   const [showReactivate, setShowReactivate] = useState(false);
 
   useEffect(() => {
@@ -37,10 +37,8 @@ export default function Login() {
 
   const validate = (): boolean => {
     const newErrors: typeof errors = {};
-    if (!email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "Enter a valid email address";
+    if (!username.trim()) {
+      newErrors.username = "Username is required";
     }
     if (!password) {
       newErrors.password = "Password is required";
@@ -53,7 +51,7 @@ export default function Login() {
     e.preventDefault();
     clearError();
     if (!validate()) return;
-    await login(email, password);
+    await login(username, password);
   };
 
   const handleReactivate = async () => {
@@ -93,25 +91,26 @@ export default function Login() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label className="mb-1.5">Email</Label>
+              <Label className="mb-1.5">Username</Label>
               <Input
-                type="email"
-                value={email}
+                type="text"
+                value={username}
                 onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (errors.email) setErrors((p) => ({ ...p, email: undefined }));
+                  setUsername(e.target.value);
+                  if (errors.username) setErrors((p) => ({ ...p, username: undefined }));
                 }}
-                placeholder="you@example.com"
-                autoComplete="email"
-                aria-invalid={!!errors.email}
+                placeholder="yourhandle"
+                autoComplete="username"
+                autoCapitalize="none"
+                aria-invalid={!!errors.username}
               />
-              {errors.email && (
+              {errors.username && (
                 <motion.p
                   initial={{ opacity: 0, y: -4 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="text-xs text-destructive mt-1"
                 >
-                  {errors.email}
+                  {errors.username}
                 </motion.p>
               )}
             </div>

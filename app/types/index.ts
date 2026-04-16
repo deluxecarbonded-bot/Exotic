@@ -102,7 +102,7 @@ export interface AppSettings {
   push_notifications: boolean;
 }
 
-export type MediaSourceType = 'screen' | 'camera' | 'both' | 'none';
+export type MediaSourceType = 'screen' | 'camera' | 'both' | 'browser' | 'browser_camera' | 'rtmp' | 'none';
 
 export interface LiveStream {
   id: string;
@@ -116,6 +116,11 @@ export interface LiveStream {
   started_at: string;
   ended_at: string | null;
   created_at: string;
+  // RTMP / Cloudflare Stream fields (populated when media_type === 'rtmp')
+  rtmp_url: string | null;
+  rtmp_key: string | null;
+  cf_live_input_uid: string | null;
+  cf_embed_url: string | null;
 }
 
 export interface LiveMessage {

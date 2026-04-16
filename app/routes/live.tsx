@@ -1,6 +1,6 @@
 import type { Route } from "./+types/live";
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useFetcher } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "~/components/layout/app-shell";
 import { EmptyState } from "~/components/cards";
@@ -13,9 +13,12 @@ import {
   IconCamera,
   IconLayers,
   IconSmartphone,
+  IconGlobe,
 } from "~/components/icons";
 import { useLiveStore } from "~/stores/live-store";
 import { useAuthStore } from "~/stores/auth-store";
+import { getServerSupabase } from "~/lib/supabase.server";
+import { createLiveInput } from "~/lib/cloudflare-stream.server";
 import type { MediaSourceType } from "~/types";
 import {
   Dialog,
@@ -31,6 +34,76 @@ export function meta({}: Route.MetaArgs) {
     { title: "Live - Exotic" },
     { name: "description", content: "Watch and start live streams on Exotic" },
   ];
+}
+
+// ─── Server action for RTMP stream creation ───
+export async function action({ request, context }: Route.ActionArgs) {
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+
+  if (intent === "create-rtmp-stream") {
+    const userId = formData.get("userId") as string;
+    const title = formData.get("title") as string;
+    const description = formData.get("description") as string;
+
+    const env = context.cloudflare.env as any;
+    const accountId: string = env.CF_ACCOUNT_ID ?? "";
+    const token: string = env.CF_STREAM_TOKEN ?? "";
+
+    if (!accountId || !token) {
+      return { error: "Cloudflare Stream is not configured. Add CF_ACCOUNT_ID and CF_STREAM_TOKEN to your environment." };
+    }
+
+    let liveInput;
+    try {
+      liveInput = await createLiveInput(accountId, token, title);
+    } catch (e: any) {
+      return { error: e.message ?? "Failed to create Cloudflare Stream live input" };
+    }
+
+    const sb = getServerSupabase(env);
+
+    // End any existing live streams for this user
+    const { data: existing } = await sb
+      .from("live_streams")
+      .select("id, cf_live_input_uid")
+      .eq("user_id", userId)
+      .eq("status", "live");
+
+    if (existing?.length) {
+      for (const s of existing) {
+        if (s.cf_live_input_uid && accountId && token) {
+          try { await (await import("~/lib/cloudflare-stream.server")).deleteLiveInput(accountId, token, s.cf_live_input_uid); } catch {}
+        }
+      }
+      const ids = existing.map((s: any) => s.id);
+      await sb.from("live_viewers").delete().in("stream_id", ids);
+      await sb.from("live_messages").delete().in("stream_id", ids);
+      await sb.from("live_streams").delete().in("id", ids);
+    }
+
+    const { data, error } = await sb
+      .from("live_streams")
+      .insert({
+        user_id: userId,
+        title,
+        description,
+        media_type: "rtmp",
+        rtmp_url: liveInput.rtmpsUrl,
+        rtmp_key: liveInput.rtmpsKey,
+        cf_live_input_uid: liveInput.uid,
+        cf_embed_url: liveInput.embedUrl,
+      })
+      .select("id")
+      .single();
+
+    if (error) return { error: error.message };
+    await sb.from("live_viewers").insert({ stream_id: data.id, user_id: userId });
+
+    return { streamId: data.id };
+  }
+
+  return { error: "Unknown intent" };
 }
 
 function LiveStreamCard({ stream }: { stream: any }) {
@@ -99,13 +172,19 @@ function MediaSourceDialog({
   const desktopOptions: { type: MediaSourceType; icon: typeof IconMonitor; label: string; desc: string }[] = [
     { type: "screen", icon: IconMonitor, label: "Screen", desc: "Share your desktop screen" },
     { type: "camera", icon: IconVideo, label: "Webcam", desc: "Use your webcam" },
-    { type: "both", icon: IconLayers, label: "Both", desc: "Screen + webcam overlay" },
+    { type: "both", icon: IconLayers, label: "Screen + Camera", desc: "Screen with webcam overlay" },
+    { type: "browser", icon: IconGlobe, label: "Browser", desc: "Capture a browser window" },
+    { type: "browser_camera", icon: IconLayers, label: "Browser + Camera", desc: "Browser window with webcam overlay" },
+    { type: "rtmp", icon: IconMonitor, label: "OBS / RTMP", desc: "Stream from OBS Studio or Prism Live" },
   ];
 
   const mobileOptions: { type: MediaSourceType; icon: typeof IconMonitor; label: string; desc: string }[] = [
     { type: "screen", icon: IconSmartphone, label: "Screen", desc: "Share your mobile screen" },
     { type: "camera", icon: IconCamera, label: "Camera", desc: "Use your camera" },
-    { type: "both", icon: IconLayers, label: "Both", desc: "Screen + camera overlay" },
+    { type: "both", icon: IconLayers, label: "Screen + Camera", desc: "Screen with camera overlay" },
+    { type: "browser", icon: IconGlobe, label: "Browser", desc: "Capture a browser window" },
+    { type: "browser_camera", icon: IconLayers, label: "Browser + Camera", desc: "Browser window with camera overlay" },
+    { type: "rtmp", icon: IconMonitor, label: "Prism Live / RTMP", desc: "Stream from Prism Live or any RTMP app" },
   ];
 
   const options = isMobile ? mobileOptions : desktopOptions;
@@ -121,20 +200,40 @@ function MediaSourceDialog({
         </DialogHeader>
         <div className="space-y-2">
           {options.map((opt) => (
-            <motion.button
-              key={opt.type}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => onSelect(opt.type)}
-              className="w-full flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-left"
-            >
-              <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0">
-                <opt.icon size={20} className="text-red-500" />
+            opt.type === "rtmp" ? (
+              <div
+                key={opt.type}
+                className="w-full flex items-center gap-3 p-3 rounded-xl bg-muted/30 opacity-60 cursor-not-allowed text-left"
+              >
+                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                  <opt.icon size={20} className="text-muted-foreground" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold">{opt.label}</p>
+                    <span className="px-1.5 py-0.5 rounded-full bg-foreground/10 text-foreground/50 text-[9px] font-bold uppercase tracking-wider">
+                      Coming Soon
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{opt.desc}</p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold">{opt.label}</p>
-                <p className="text-xs text-muted-foreground">{opt.desc}</p>
-              </div>
-            </motion.button>
+            ) : (
+              <motion.button
+                key={opt.type}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => onSelect(opt.type)}
+                className="w-full flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-left"
+              >
+                <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                  <opt.icon size={20} className="text-red-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold">{opt.label}</p>
+                  <p className="text-xs text-muted-foreground">{opt.desc}</p>
+                </div>
+              </motion.button>
+            )
           ))}
           <motion.button
             whileTap={{ scale: 0.97 }}
@@ -165,16 +264,32 @@ function GoLiveDialog({
   const { user } = useAuthStore();
   const { createStream } = useLiveStore();
   const navigate = useNavigate();
+  const rtmpFetcher = useFetcher<{ streamId?: string; error?: string }>();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [showMediaPicker, setShowMediaPicker] = useState(false);
 
+  // Navigate when RTMP stream is created via server action
+  useEffect(() => {
+    if (rtmpFetcher.state === "idle" && rtmpFetcher.data) {
+      if (rtmpFetcher.data.error) {
+        setError(rtmpFetcher.data.error);
+        setSubmitting(false);
+      } else if (rtmpFetcher.data.streamId) {
+        setTitle("");
+        setDescription("");
+        setSubmitting(false);
+        onClose();
+        setTimeout(() => navigate(`/live/${rtmpFetcher.data!.streamId}`), 50);
+      }
+    }
+  }, [rtmpFetcher.state, rtmpFetcher.data]);
+
   const handleSubmit = async () => {
     if (!title.trim() || submitting || !user?.id) return;
     setError("");
-    // Show media source picker — stream creation happens after media selection
     setShowMediaPicker(true);
   };
 
@@ -182,8 +297,17 @@ function GoLiveDialog({
     if (!user?.id) return;
     setShowMediaPicker(false);
     setSubmitting(true);
+
+    if (mediaType === "rtmp") {
+      // Server-side: create Cloudflare Stream live input
+      rtmpFetcher.submit(
+        { intent: "create-rtmp-stream", userId: user.id, title: title.trim(), description: description.trim() },
+        { method: "post", action: "/live" },
+      );
+      return;
+    }
+
     try {
-      // Always creates a fresh stream (endAllUserStreams is called inside createStream)
       const streamId = await createStream(user.id, title.trim(), description.trim(), mediaType);
       if (!streamId) throw new Error("Failed to create stream");
       setTitle("");

@@ -1,9 +1,11 @@
 import type { Route } from "./+types/live.$streamId";
 import { useState, useEffect, useRef } from "react";
-import { useParams, Link, useNavigate } from "react-router";
+import { useParams, Link, useNavigate, useFetcher } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "~/components/layout/app-shell";
 import { UserAvatar } from "~/components/user-avatar";
+import { getServerSupabase } from "~/lib/supabase.server";
+import { deleteLiveInput } from "~/lib/cloudflare-stream.server";
 import {
   IconArrowLeft,
   IconRadio,
@@ -14,17 +16,141 @@ import {
   IconMonitor,
   IconVideo,
   IconLayers,
+  IconGlobe,
 } from "~/components/icons";
 import { useLiveStore } from "~/stores/live-store";
 import { useAuthStore } from "~/stores/auth-store";
 import { useWebRTCHost, useWebRTCViewer } from "~/hooks/use-webrtc";
+import { useMediaDevices } from "~/hooks/use-media-devices";
 import type { LiveMessage, MediaSourceType } from "~/types";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Live Stream - Exotic" }];
 }
 
-// ─── Video element that attaches a MediaStream ───
+export async function action({ request, params, context }: Route.ActionArgs) {
+  const { streamId } = params;
+  if (!streamId) return { error: "No stream ID" };
+
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+
+  if (intent === "delete-stream") {
+    const env = context.cloudflare.env as any;
+    const sb = getServerSupabase(env);
+
+    // Fetch stream to get CF live input UID (if RTMP)
+    const { data: stream } = await sb
+      .from("live_streams")
+      .select("cf_live_input_uid")
+      .eq("id", streamId)
+      .single();
+
+    // Delete Cloudflare Stream live input if present
+    const cfUid = stream?.cf_live_input_uid;
+    if (cfUid && env.CF_ACCOUNT_ID && env.CF_STREAM_TOKEN) {
+      try {
+        await deleteLiveInput(env.CF_ACCOUNT_ID, env.CF_STREAM_TOKEN, cfUid);
+      } catch (e) {
+        console.error("[delete-stream] Failed to delete CF live input:", e);
+      }
+    }
+
+    await sb.from("live_viewers").delete().eq("stream_id", streamId);
+    await sb.from("live_messages").delete().eq("stream_id", streamId);
+    await sb.from("live_streams").delete().eq("id", streamId);
+    return { ok: true };
+  }
+
+  return { error: "Unknown intent" };
+}
+
+// ─── RTMP Host Setup Panel ───
+function RtmpHostPanel({ stream }: { stream: any }) {
+  const [copiedUrl, setCopiedUrl] = useState(false);
+  const [copiedKey, setCopiedKey] = useState(false);
+
+  const copy = async (text: string, setFlag: (v: boolean) => void) => {
+    await navigator.clipboard.writeText(text);
+    setFlag(true);
+    setTimeout(() => setFlag(false), 2000);
+  };
+
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-5 py-4 overflow-y-auto">
+      <div className="text-center mb-1">
+        <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-2">
+          <IconMonitor size={20} className="text-red-400" />
+        </div>
+        <p className="text-white text-sm font-semibold">OBS / Prism Live Setup</p>
+        <p className="text-white/40 text-[11px] mt-0.5">Enter these settings in your streaming app</p>
+      </div>
+
+      <div className="w-full max-w-xs space-y-2.5">
+        {/* Server URL */}
+        <div>
+          <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-1">
+            Server URL (RTMPS)
+          </p>
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10">
+            <code className="flex-1 text-xs text-green-300 truncate font-mono">
+              {stream.rtmp_url ?? "rtmps://live.cloudflare.com/live/"}
+            </code>
+            <button
+              onClick={() => copy(stream.rtmp_url ?? "rtmps://live.cloudflare.com/live/", setCopiedUrl)}
+              className="text-[10px] font-semibold text-white/50 hover:text-white transition-colors flex-shrink-0"
+            >
+              {copiedUrl ? "Copied!" : "Copy"}
+            </button>
+          </div>
+        </div>
+
+        {/* Stream Key */}
+        <div>
+          <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-1">
+            Stream Key
+          </p>
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10">
+            <code className="flex-1 text-xs text-yellow-300 truncate font-mono">
+              {stream.rtmp_key ?? "—"}
+            </code>
+            <button
+              onClick={() => copy(stream.rtmp_key ?? "", setCopiedKey)}
+              className="text-[10px] font-semibold text-white/50 hover:text-white transition-colors flex-shrink-0"
+            >
+              {copiedKey ? "Copied!" : "Copy"}
+            </button>
+          </div>
+        </div>
+
+        {/* OBS instructions */}
+        <div className="rounded-lg bg-white/5 px-3 py-2.5 text-[11px] text-white/50 leading-relaxed space-y-1">
+          <p className="font-semibold text-white/70">In OBS Studio:</p>
+          <p>Settings → Stream → Service: <span className="text-white/80">Custom</span></p>
+          <p>Paste the Server URL and Stream Key above</p>
+          <p className="font-semibold text-white/70 pt-1">In Prism Live:</p>
+          <p>Settings → Custom RTMP → paste both values</p>
+        </div>
+
+        <p className="text-[10px] text-white/30 text-center">
+          Viewers will see your stream as soon as you go live in OBS/Prism
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── RTMP Viewer (Cloudflare Stream embed) ───
+function RtmpViewer({ embedUrl }: { embedUrl: string }) {
+  return (
+    <iframe
+      src={`${embedUrl}?autoplay=true&muted=false`}
+      className="w-full h-full border-0"
+      allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+      allowFullScreen
+    />
+  );
+}
 function StreamVideo({
   stream,
   muted = false,
@@ -71,10 +197,158 @@ function LiveBadges({ mediaType }: { mediaType: string }) {
         <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-md bg-black/50 text-white/70 text-[10px] z-10">
           {mediaType === "screen" && <><IconMonitor size={10} /> Screen</>}
           {mediaType === "camera" && <><IconVideo size={10} /> Camera</>}
-          {mediaType === "both" && <><IconLayers size={10} /> Both</>}
+          {mediaType === "both" && <><IconLayers size={10} /> Screen+Cam</>}
+          {mediaType === "browser" && <><IconGlobe size={10} /> Browser</>}
+          {mediaType === "browser_camera" && <><IconLayers size={10} /> Browser+Cam</>}
+          {mediaType === "rtmp" && <><IconMonitor size={10} /> OBS/RTMP</>}
         </div>
       )}
     </>
+  );
+}
+
+// ─── Device Select ───
+function DeviceSelect({
+  label,
+  devices,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  devices: { deviceId: string; label: string }[];
+  value: string;
+  onChange: (id: string) => void;
+  placeholder: string;
+}) {
+  return (
+    <div className="w-full">
+      <label className="block text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-1">
+        {label}
+      </label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-2.5 py-1.5 rounded-lg bg-white/10 text-white text-xs outline-none focus:ring-1 focus:ring-white/20 appearance-none cursor-pointer"
+      >
+        <option value="">{placeholder}</option>
+        {devices.map((d) => (
+          <option key={d.deviceId} value={d.deviceId}>
+            {d.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+// ─── Host Pre-Capture Panel (with device picker) ───
+function HostPreCapture({
+  mediaType,
+  host,
+}: {
+  mediaType: MediaSourceType;
+  host: ReturnType<typeof useWebRTCHost>;
+}) {
+  const { cameras, mics, loading } = useMediaDevices();
+  const [videoDeviceId, setVideoDeviceId] = useState("");
+  const [audioDeviceId, setAudioDeviceId] = useState("");
+
+  const showCamera = mediaType === "camera" || mediaType === "both" || mediaType === "browser_camera";
+  // Show mic for all types (mic can overlay screen/browser captures too)
+  const showMic = mediaType !== "none";
+
+  const startLabel =
+    mediaType === "both" ? "Start Screen & Camera" :
+    mediaType === "screen" ? "Start Screen Share" :
+    mediaType === "browser" ? "Start Browser Capture" :
+    mediaType === "browser_camera" ? "Start Browser & Camera" :
+    "Start Camera";
+
+  const Icon =
+    mediaType === "screen" ? IconMonitor :
+    mediaType === "camera" ? IconVideo :
+    mediaType === "browser" || mediaType === "browser_camera" ? IconGlobe :
+    IconLayers;
+
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6">
+      <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-1">
+        <Icon size={24} className="text-white/60" />
+      </div>
+
+      {!loading && (
+        <div className="w-full max-w-xs space-y-2">
+          {showCamera && cameras.length > 0 && (
+            <DeviceSelect
+              label="Webcam"
+              devices={cameras}
+              value={videoDeviceId}
+              onChange={setVideoDeviceId}
+              placeholder="Default camera"
+            />
+          )}
+          {showMic && mics.length > 0 && (
+            <DeviceSelect
+              label="Microphone"
+              devices={mics}
+              value={audioDeviceId}
+              onChange={setAudioDeviceId}
+              placeholder="Default microphone"
+            />
+          )}
+        </div>
+      )}
+
+      {host.error === 'permission-denied' ? (
+        <div className="flex flex-col items-center gap-3 text-center px-5">
+          <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
+            <IconX size={20} className="text-red-400" />
+          </div>
+          <div>
+            <p className="text-white text-sm font-semibold mb-1">Permission Denied</p>
+            <p className="text-white/50 text-[11px] leading-relaxed">
+              Your browser blocked access to your {
+                mediaType === 'screen' || mediaType === 'browser' ? 'screen' :
+                mediaType === 'both' || mediaType === 'browser_camera' ? 'screen and camera' :
+                'camera/microphone'
+              }.
+            </p>
+          </div>
+          <div className="w-full max-w-xs rounded-lg bg-white/5 px-3 py-2.5 text-left text-[11px] text-white/50 space-y-1">
+            <p className="font-semibold text-white/70">To fix this:</p>
+            <p>1. Click the <span className="text-white/80">lock icon</span> or <span className="text-white/80">camera icon</span> in your browser's address bar</p>
+            <p>2. Set Camera, Microphone and Screen sharing to <span className="text-white/80">Allow</span></p>
+            <p>3. Reload the page and try again</p>
+          </div>
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => window.location.reload()}
+            className="px-5 py-2 rounded-full bg-white/10 text-white text-xs font-semibold hover:bg-white/20 transition-colors"
+          >
+            Reload & Retry
+          </motion.button>
+        </div>
+      ) : host.error ? (
+        <p className="text-xs text-red-400 text-center px-4">{host.error}</p>
+      ) : host.capturing ? (
+        <p className="text-xs text-white/50">Starting capture...</p>
+      ) : (
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={() =>
+            host.startCapture(
+              mediaType,
+              videoDeviceId || undefined,
+              audioDeviceId || undefined,
+            )
+          }
+          className="mt-1 px-5 py-2 rounded-full bg-red-500 text-white text-xs font-semibold hover:bg-red-600 transition-colors"
+        >
+          {startLabel}
+        </motion.button>
+      )}
+    </div>
   );
 }
 
@@ -85,22 +359,41 @@ function LiveVideoPlayer({
   host,
   viewer,
   hostUser,
+  currentStream,
 }: {
   mediaType: MediaSourceType;
   isHost: boolean;
   host: ReturnType<typeof useWebRTCHost>;
   viewer: ReturnType<typeof useWebRTCViewer>;
   hostUser: any;
+  currentStream: any;
 }) {
-  // Still loading stream data — show loading placeholder
+  // Still loading stream data
   if (mediaType === "none") {
-    // Check if stream is still loading (not chat-only)
     return (
       <div className="relative w-full bg-black/90 overflow-hidden flex-shrink-0" style={{ aspectRatio: "16/9", maxHeight: "40vh" }}>
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
           <IconRadio size={24} className="text-white/30 animate-pulse" />
           <p className="text-[11px] text-white/30">Loading stream...</p>
         </div>
+      </div>
+    );
+  }
+
+  // ── RTMP MODE ──
+  if (mediaType === "rtmp") {
+    return (
+      <div className="relative w-full bg-black overflow-hidden flex-shrink-0" style={{ aspectRatio: "16/9", maxHeight: "40vh" }}>
+        {isHost ? (
+          <RtmpHostPanel stream={currentStream} />
+        ) : currentStream?.cf_embed_url ? (
+          <RtmpViewer embedUrl={currentStream.cf_embed_url} />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <p className="text-white/30 text-xs">Waiting for stream...</p>
+          </div>
+        )}
+        <LiveBadges mediaType={mediaType} />
       </div>
     );
   }
@@ -128,6 +421,15 @@ function LiveVideoPlayer({
               />
             )}
 
+            {/* Browser only */}
+            {mediaType === "browser" && host.screenStream && (
+              <StreamVideo
+                stream={host.screenStream}
+                muted
+                className="w-full h-full object-contain"
+              />
+            )}
+
             {/* Both mode: screen as main */}
             {mediaType === "both" && host.screenStream && (
               <StreamVideo
@@ -148,33 +450,30 @@ function LiveVideoPlayer({
                 />
               </div>
             )}
+
+            {/* Browser + Camera: browser as main */}
+            {mediaType === "browser_camera" && host.screenStream && (
+              <StreamVideo
+                stream={host.screenStream}
+                muted
+                className="w-full h-full object-contain"
+              />
+            )}
+
+            {/* Browser + Camera: camera PiP */}
+            {mediaType === "browser_camera" && host.cameraStream && (
+              <div className="absolute bottom-3 right-3 w-28 h-20 sm:w-36 sm:h-28 rounded-xl overflow-hidden border-2 border-white/20 shadow-2xl z-10">
+                <StreamVideo
+                  stream={host.cameraStream}
+                  muted
+                  mirror
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
           </>
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-            <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center">
-              {mediaType === "screen" && <IconMonitor size={28} className="text-white/60" />}
-              {mediaType === "camera" && <IconVideo size={28} className="text-white/60" />}
-              {mediaType === "both" && <IconLayers size={28} className="text-white/60" />}
-            </div>
-            {host.error ? (
-              <p className="text-xs text-red-400 text-center px-4">{host.error}</p>
-            ) : host.capturing ? (
-              <p className="text-xs text-white/50">Starting capture...</p>
-            ) : (
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => host.startCapture(mediaType)}
-                className="px-4 py-2 rounded-full bg-red-500 text-white text-xs font-semibold hover:bg-red-600 transition-colors"
-              >
-                Start{" "}
-                {mediaType === "both"
-                  ? "Screen & Camera"
-                  : mediaType === "screen"
-                  ? "Screen Share"
-                  : "Camera"}
-              </motion.button>
-            )}
-          </div>
+          <HostPreCapture mediaType={mediaType} host={host} />
         )}
 
         <LiveBadges mediaType={mediaType} />
@@ -363,13 +662,13 @@ export default function LiveStreamPage() {
   const sendMessage = useLiveStore((s) => s.sendMessage);
   const pinMessage = useLiveStore((s) => s.pinMessage);
   const unpinMessage = useLiveStore((s) => s.unpinMessage);
-  const endStream = useLiveStore((s) => s.endStream);
   const subscribeToStream = useLiveStore((s) => s.subscribeToStream);
   const unsubscribe = useLiveStore((s) => s.unsubscribe);
 
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [ending, setEnding] = useState(false);
+  const deleteFetcher = useFetcher();
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -391,12 +690,7 @@ export default function LiveStreamPage() {
     currentStream?.user_id,
   );
 
-  // Auto-start capture for host when stream loads
-  useEffect(() => {
-    if (isHost && mediaType !== "none" && currentStream && !host.localStream && !host.capturing) {
-      host.startCapture(mediaType);
-    }
-  }, [isHost, mediaType, currentStream?.id]);
+  // Host picks devices manually in the HostPreCapture panel — no auto-start
 
   // Mount: fetch data, join, subscribe
   useEffect(() => {
@@ -439,13 +733,24 @@ export default function LiveStreamPage() {
     }
   };
 
-  const handleEndStream = async () => {
+  // Navigate away once the server delete action completes
+  useEffect(() => {
+    if (deleteFetcher.state === "idle" && (deleteFetcher.data as any)?.ok) {
+      // Clean up client state then navigate
+      unsubscribe();
+      navigate("/live");
+    }
+  }, [deleteFetcher.state, deleteFetcher.data]);
+
+  const handleEndStream = () => {
     if (!streamId || ending) return;
     setEnding(true);
     host.stopCapture();
-    await endStream(streamId);
-    setEnding(false);
-    navigate("/live");
+    // Submit server action which deletes with service role key
+    deleteFetcher.submit(
+      { intent: "delete-stream" },
+      { method: "post", action: `/live/${streamId}` },
+    );
   };
 
   return (
@@ -517,6 +822,7 @@ export default function LiveStreamPage() {
           host={host}
           viewer={viewer}
           hostUser={currentStream?.user}
+          currentStream={currentStream}
         />
 
         {/* Pinned message */}

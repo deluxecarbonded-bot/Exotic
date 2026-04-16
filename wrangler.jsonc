@@ -64,7 +64,12 @@
 		"VALUE_FROM_CLOUDFLARE": "Starter template running on Cloudflare",
 		"SUPABASE_URL": "https://jzbpmajvncwslqdrzijr.supabase.co",
 		"SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6YnBtYWp2bmN3c2xxZHJ6aWpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxNzg4MTcsImV4cCI6MjA5MTc1NDgxN30.gZP_ebZs_t5bfcWDBgoHtJRoOuqVYjWqC0kBUMSf8dQ",
-		"SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6YnBtYWp2bmN3c2xxZHJ6aWpyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjE3ODgxNywiZXhwIjoyMDkxNzU0ODE3fQ.kNWrI3eQenQvsrvqmac-BJ4r33XV7AArdZcqYXGt0zs"
+		"SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6YnBtYWp2bmN3c2xxZHJ6aWpyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjE3ODgxNywiZXhwIjoyMDkxNzU0ODE3fQ.kNWrI3eQenQvsrvqmac-BJ4r33XV7AArdZcqYXGt0zs",
+		// Cloudflare Stream – required for OBS/RTMP support
+		// 1. Find your Account ID at dash.cloudflare.com (right sidebar)
+		// 2. Create an API token with "Stream:Edit" permission
+		"CF_ACCOUNT_ID": "5957109bb6c6b260747df55ba9d67dd2",
+		"CF_STREAM_TOKEN": ""
 	},
 
 	/**

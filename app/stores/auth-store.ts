@@ -8,7 +8,7 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   setUser: (user: User | null) => void;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (username: string, password: string) => Promise<boolean>;
   register: (username: string, displayName: string, email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
@@ -59,9 +59,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  login: async (email, password) => {
+  login: async (username, password) => {
     set({ isLoading: true, error: null });
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    // Resolve username → email via server (uses service role key)
+    const res = await fetch('/api/resolve-username', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username }),
+    });
+    const resolved = await res.json();
+    if (!res.ok || !resolved.email) {
+      set({ isLoading: false, error: resolved.error ?? 'No account found with that username.' });
+      return false;
+    }
+    const { data, error } = await supabase.auth.signInWithPassword({ email: resolved.email, password });
     if (error) {
       set({ isLoading: false, error: error.message });
       return false;

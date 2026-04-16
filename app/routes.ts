@@ -15,6 +15,10 @@ export default [
     route("live/:streamId", "routes/live.$streamId.tsx"),
   ]),
 
+  // Temporary showcase
+  route("showcase", "routes/showcase.tsx"),
+  route("api/resolve-username", "routes/api.resolve-username.ts"),
+
   // Public routes
   route("ask/:username", "routes/ask.$username.tsx"),
   route("login", "routes/login.tsx"),

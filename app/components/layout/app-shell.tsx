@@ -13,6 +13,7 @@ import {
   IconSettings,
   IconImage,
   IconRadio,
+  IconPlay,
 } from '~/components/icons';
 import { useThemeStore } from '~/stores/theme-store';
 import { useNotificationStore } from '~/stores/notification-store';
@@ -27,6 +28,7 @@ const navItems = [
   { path: '/discover', icon: IconCompass, label: 'Discover' },
   { path: '/posts', icon: IconImage, label: 'Posts' },
   { path: '/live', icon: IconRadio, label: 'Live' },
+  { path: '/showcase', icon: IconPlay, label: 'Showcase' },
   { path: '/notifications', icon: IconBell, label: 'Notifications' },
   { path: '/profile/me', icon: IconUser, label: 'Profile' },
   { path: '/settings', icon: IconSettings, label: 'Settings' },
