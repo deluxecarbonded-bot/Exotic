@@ -1,0 +1,257 @@
+import type { Route } from "./+types/posts";
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { AppShell } from "~/components/layout/app-shell";
+import { PostCard, EmptyState } from "~/components/cards";
+import { IconImage, IconX, IconCamera, IconPlay } from "~/components/icons";
+import { useAuthStore } from "~/stores/auth-store";
+import { usePostStore } from "~/stores/post-store";
+import { useFollowStore } from "~/stores/follow-store";
+import { fadeInUp } from "~/components/animations";
+
+export function meta({}: Route.MetaArgs) {
+  return [
+    { title: "Posts - Exotic" },
+    { name: "description", content: "Share photos and videos on Exotic" },
+  ];
+}
+
+const MAX_FILES = 4;
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+
+function CreatePostForm({ onCreated }: { onCreated: () => void }) {
+  const { user } = useAuthStore();
+  const { createPost } = usePostStore();
+  const [caption, setCaption] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<{ url: string; type: string }[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(e.target.files ?? []);
+    setError("");
+
+    const valid = selected.filter((f) => {
+      if (!f.type.startsWith("image/") && !f.type.startsWith("video/")) {
+        setError("Only images and videos are allowed.");
+        return false;
+      }
+      if (f.size > MAX_FILE_SIZE) {
+        setError("Files must be smaller than 50MB.");
+        return false;
+      }
+      return true;
+    });
+
+    const newFiles = [...files, ...valid].slice(0, MAX_FILES);
+    setFiles(newFiles);
+
+    // Generate previews
+    const newPreviews: { url: string; type: string }[] = [];
+    newFiles.forEach((f) => {
+      const url = URL.createObjectURL(f);
+      newPreviews.push({ url, type: f.type.startsWith("video/") ? "video" : "image" });
+    });
+    setPreviews(newPreviews);
+
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeFile = (index: number) => {
+    URL.revokeObjectURL(previews[index].url);
+    setFiles((f) => f.filter((_, i) => i !== index));
+    setPreviews((p) => p.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async () => {
+    if (!user?.id || files.length === 0) return;
+    setSubmitting(true);
+    setError("");
+    try {
+      await createPost(user.id, caption.trim(), files);
+      setCaption("");
+      setFiles([]);
+      previews.forEach((p) => URL.revokeObjectURL(p.url));
+      setPreviews([]);
+      onCreated();
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to create post");
+    }
+    setSubmitting(false);
+  };
+
+  return (
+    <motion.div className="px-4 py-4 border-b border-muted" {...fadeInUp}>
+      <h2 className="text-sm font-bold mb-3">Create Post</h2>
+
+      {/* Media previews */}
+      {previews.length > 0 && (
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          {previews.map((preview, i) => (
+            <div key={i} className="relative rounded-lg overflow-hidden bg-muted aspect-square">
+              {preview.type === "video" ? (
+                <video
+                  src={preview.url}
+                  className="w-full h-full object-cover"
+                  muted
+                />
+              ) : (
+                <img
+                  src={preview.url}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              )}
+              <button
+                onClick={() => removeFile(i)}
+                className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors"
+              >
+                <IconX size={14} />
+              </button>
+              {preview.type === "video" && (
+                <div className="absolute bottom-1.5 left-1.5 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center">
+                  <IconPlay size={10} />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Caption */}
+      <textarea
+        value={caption}
+        onChange={(e) => setCaption(e.target.value)}
+        placeholder="Write a caption..."
+        className="w-full resize-none rounded-lg bg-muted/50 p-3 text-sm placeholder:text-muted-foreground focus:outline-none min-h-[80px] mb-3"
+        maxLength={2000}
+      />
+
+      {error && (
+        <p className="text-sm text-destructive mb-3">{error}</p>
+      )}
+
+      {/* Actions */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,video/*"
+            multiple
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={files.length >= MAX_FILES}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+          >
+            <IconCamera size={16} />
+            Add media
+          </motion.button>
+          <span className="text-xs text-muted-foreground">
+            {files.length}/{MAX_FILES}
+          </span>
+        </div>
+
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          onClick={handleSubmit}
+          disabled={files.length === 0 || submitting}
+          className="px-5 py-2 text-sm font-medium rounded-lg bg-foreground text-background hover:opacity-90 transition-opacity disabled:opacity-40"
+        >
+          {submitting ? (
+            <motion.div
+              className="w-4 h-4 border-2 border-background border-t-transparent rounded-full"
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
+            />
+          ) : (
+            "Post"
+          )}
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+}
+
+export default function PostsPage() {
+  const { user } = useAuthStore();
+  const { posts, isLoading, fetchPosts, checkLikes } = usePostStore();
+  const { following, fetchFollowing } = useFollowStore();
+
+  useEffect(() => {
+    if (!user?.id) return;
+    fetchFollowing(user.id).then(() => {
+      const followedIds = Array.from(useFollowStore.getState().following);
+      fetchPosts(followedIds.length > 0 ? [...followedIds, user.id] : undefined).then(() => {
+        checkLikes(user.id);
+      });
+    });
+  }, [user?.id]);
+
+  const handleRefresh = () => {
+    if (!user?.id) return;
+    const followedIds = Array.from(following);
+    fetchPosts(followedIds.length > 0 ? [...followedIds, user.id] : undefined).then(() => {
+      checkLikes(user.id);
+    });
+  };
+
+  return (
+    <AppShell>
+      <div className="max-w-2xl mx-auto">
+        <div className="px-4 py-4">
+          <h1 className="text-xl font-bold">Posts</h1>
+        </div>
+
+        <CreatePostForm onCreated={handleRefresh} />
+
+        <AnimatePresence mode="wait">
+          {isLoading ? (
+            <motion.div
+              key="skeleton"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="space-y-px"
+            >
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="p-4 animate-pulse">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 bg-muted rounded-full" />
+                    <div className="h-3 w-24 bg-muted rounded" />
+                  </div>
+                  <div className="aspect-square bg-muted rounded-lg mb-3" />
+                  <div className="h-3 w-3/4 bg-muted rounded" />
+                </div>
+              ))}
+            </motion.div>
+          ) : posts.length === 0 ? (
+            <EmptyState
+              icon={IconImage}
+              title="No posts yet"
+              description="Create your first post by uploading a photo or video above."
+            />
+          ) : (
+            <motion.div
+              key="posts"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="divide-y divide-muted/50"
+            >
+              {posts.map((post) => (
+                <PostCard key={post.id} post={post} />
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </AppShell>
+  );
+}
