@@ -1,183 +1,131 @@
-# camelAI Starter Template
+# Exotic
 
-Full-stack React app with SSR, Durable Objects, and SQLite. Built on React Router 7 and Cloudflare Workers.
+**Where connections come alive.** Exotic is an anonymous Q&A social platform that lets you receive questions from anyone, share posts and photos, go live, and build your audience — all in one place.
 
-## Architecture Default
+---
 
-Use React Router 7 in framework mode (successor to Remix): data reads in route `loader()`, mutations in `action()`, and forms/fetchers for server-driven updates. Prefer this over SPA-style client fetching patterns by default.
+## Features
 
-## Quick Start
+| Feature | Description |
+|---------|-------------|
+| **Home Feed** | Curated stream of questions, answers, and posts from people you follow |
+| **Discover** | Trending topics, creators, and communities to explore |
+| **Posts** | Share photos and videos with your followers |
+| **Live Streaming** | Go live in one tap with real-time audience interaction |
+| **Question Inbox** | Receive and answer anonymous questions from anyone |
+| **Notifications** | Likes, follows, and replies in one place |
+| **Profile** | Your answers, posts, and identity — all here |
+| **Settings** | Full control over your profile and privacy |
+| **Showcase** | Interactive video showcase of the full Exotic experience |
 
-```bash
-bun dev          # Start dev server
-bun run test     # Run tests
-bun run build    # Build for production
-bun run deploy   # Deploy to Cloudflare
-```
+---
+
+## Tech Stack
+
+- **Frontend** — React 19 + React Router 7 (framework mode, SSR)
+- **Styling** — Tailwind CSS v4 + shadcn/ui
+- **Backend** — Cloudflare Workers
+- **Database** — Supabase (PostgreSQL + Auth)
+- **Storage** — Cloudflare R2 (media uploads)
+- **Real-time** — WebSockets via Cloudflare Durable Objects
+- **Live Streaming** — WebRTC
+- **Build** — Vite + Bun
+
+---
+
+## Authentication
+
+Exotic uses **username-based login** — no email required at sign-in. Under the hood, the server resolves your username to your account securely using a case-insensitive lookup.
+
+---
 
 ## Project Structure
 
 ```
 app/
-  routes/           # React Router routes (loaders, actions, components)
-  schemas/          # Zod schemas (shared between routes and DOs)
+├── components/
+│   ├── layout/         # App shell, sidebar, mobile nav
+│   ├── ui/             # shadcn/ui components
+│   └── icons.tsx       # Icon set
+├── routes/
+│   ├── home.tsx        # Home feed
+│   ├── discover.tsx    # Discover / trending
+│   ├── posts.tsx       # Posts feed
+│   ├── live.tsx        # Live streaming
+│   ├── inbox.tsx       # Anonymous question inbox
+│   ├── notifications.tsx
+│   ├── profile.tsx
+│   ├── settings.tsx
+│   ├── showcase.tsx    # Video showcase (custom HTML5 player)
+│   ├── login.tsx
+│   └── api.*.ts        # Server API routes
+├── stores/
+│   └── auth-store.ts   # Zustand auth state
+└── lib/
+    └── supabase.ts     # Supabase client
 workers/
-  app.ts            # Worker entry point (exports DOs)
-  example-do.ts     # Example Durable Object with SQLite
-  tests/            # Vitest tests for Durable Objects
-wrangler.jsonc      # Cloudflare config (bindings, migrations)
-vitest.config.ts    # Vitest config for Workers pool
+└── app.ts              # Cloudflare Worker entry
+public/
+└── exotic_showcase.mp4 # App showcase video
 ```
 
-## Key Patterns
+---
 
-### Accessing Cloudflare Bindings in Loaders/Actions
+## Getting Started
 
-```typescript
-export async function loader({ context }: Route.LoaderArgs) {
-  // Access any binding via context.cloudflare.env
-  const id = context.cloudflare.env.EXAMPLE_DO.idFromName("global");
-  const stub = context.cloudflare.env.EXAMPLE_DO.get(id);
+### Prerequisites
 
-  // Call RPC methods directly (not fetch!)
-  const data = await stub.listContacts();
-  return { data };
-}
-```
+- [Bun](https://bun.sh) (package manager)
+- [Wrangler](https://developers.cloudflare.com/workers/wrangler/) (Cloudflare CLI)
+- A [Supabase](https://supabase.com) project
 
-### SQL Data Proxy Service Binding
-
-The starter includes a `DATA_PROXY` service binding.
-
-- Local dev: binding points to `LocalDataProxyService` (`workers/data-proxy.ts`), which forwards to `DATA_PROXY_URL` when set
-- camelAI deploy: platform rewrites `DATA_PROXY` to its internal service binding
-
-```typescript
-export async function loader({ context }: Route.LoaderArgs) {
-  const result = await context.cloudflare.env.DATA_PROXY.mysqlQuery({
-    mode: "read",
-    host: "db.example.com",
-    user: "user",
-    password: "pass",
-    database: "analytics",
-    query: "SELECT * FROM orders WHERE customer_id = ?",
-    params: [123],
-  });
-
-  if (!result.ok) {
-    throw new Error(result.error.message);
-  }
-
-  return { rows: result.data.recordset ?? [] };
-}
-```
-
-### Durable Object with SQLite
-
-```typescript
-export class MyDO extends DurableObject<Env> {
-  private sql: SqlStorage;
-
-  constructor(ctx: DurableObjectState, env: Env) {
-    super(ctx, env);
-    this.sql = ctx.storage.sql;
-
-    // Create tables (idempotent)
-    this.sql.exec(`CREATE TABLE IF NOT EXISTS items (...)`);
-  }
-
-  // RPC method - callable from routes
-  async listItems() {
-    return this.sql.exec("SELECT * FROM items").toArray();
-  }
-}
-```
-
-### Shared Zod Schemas
-
-Put schemas in `app/schemas/` and import in both routes and DOs:
-
-```typescript
-// app/schemas/contact.ts
-export const CreateContactSchema = z.object({
-  name: z.string().min(1),
-  email: z.string().email(),
-});
-
-// In route action:
-const result = CreateContactSchema.safeParse(formData);
-
-// In DO: use the same types
-async createContact(input: CreateContactInput) { ... }
-```
-
-### HydrateFallback for Loading States
-
-```typescript
-// Shows during initial hydration (SSR → client)
-export function HydrateFallback() {
-  return <div>Loading...</div>;
-}
-```
-
-## Testing
+### Install
 
 ```bash
-bun run test  # Run tests with vitest
+bun install
 ```
 
-### Testing Durable Objects
+### Environment Variables
 
-Tests use `@cloudflare/vitest-pool-workers` for isolated DO testing:
+Set these in your Cloudflare Worker secrets or `.dev.vars` for local development:
 
-```typescript
-import { describe, it, expect } from "vitest";
-import { env } from "cloudflare:test";
-
-describe("MyDO", () => {
-  it("creates and retrieves items", async () => {
-    // Get a DO stub from env bindings
-    const id = env.MY_DO.idFromName("test");
-    const stub = env.MY_DO.get(id);
-
-    // Call RPC methods directly
-    await stub.createItem({ name: "Test" });
-    const items = await stub.listItems();
-
-    expect(items).toHaveLength(1);
-  });
-});
+```
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-See `workers/tests/example-do.test.ts` for a complete example.
-
-**Known limitation:** Tests expecting DO methods to throw exceptions may cause "Failed to pop isolated storage stack frame" errors. Test error handling in route actions instead.
-
-## Adding a New Durable Object
-
-1. Create the class in `workers/my-do.ts`
-2. Export from `workers/app.ts`: `export { MyDO } from "./my-do"`
-3. Add binding to `wrangler.jsonc`:
-   ```jsonc
-   "durable_objects": {
-     "bindings": [{ "name": "MY_DO", "class_name": "MyDO" }]
-   }
-   ```
-4. Add migration (increment tag):
-   ```jsonc
-   "migrations": [
-     { "tag": "v1", "new_sqlite_classes": ["ExampleDO"] },
-     { "tag": "v2", "new_sqlite_classes": ["MyDO"] }
-   ]
-   ```
-5. `postinstall` runs `wrangler types` automatically; re-run `bun run cf-typegen` after binding changes to update `Env` types
-
-## Adding shadcn/ui Components
-
-Use `bunx` to run the shadcn CLI:
+### Deploy
 
 ```bash
-bunx --bun shadcn@latest add button card input
+bun run deploy
 ```
 
-Components install to `app/components/ui/`.
+---
+
+## Database
+
+Exotic uses Supabase with the following core tables:
+
+- **profiles** — user profiles (username, display_name, avatar, email, bio)
+- **posts** — user posts with media
+- **questions** — anonymous questions sent to users
+- **answers** — answers to questions
+- **follows** — follower/following relationships
+- **notifications** — activity notifications
+
+---
+
+## Contributing
+
+1. Fork the repo
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Commit your changes: `git commit -m 'feat: add your feature'`
+4. Push to the branch: `git push origin feature/your-feature`
+5. Open a Pull Request
+
+---
+
+## License
+
+MIT
