@@ -56,104 +56,127 @@ function StreamVideo({
   );
 }
 
-// ─── Host Video Display ───
-function HostVideoDisplay({
-  mediaType,
-  host,
-}: {
-  mediaType: MediaSourceType;
-  host: ReturnType<typeof useWebRTCHost>;
-}) {
-  if (mediaType === "none") return null;
-
-  const hasCapture = !!host.localStream && host.localStream.getTracks().length > 0;
-
+// ─── Badges overlay ───
+function LiveBadges({ mediaType }: { mediaType: string }) {
   return (
-    <div
-      className="relative w-full bg-black/95 overflow-hidden"
-      style={{ aspectRatio: mediaType === "camera" ? "4/3" : "16/9", maxHeight: "40vh" }}
-    >
-      {/* Screen share or single camera (main view) */}
-      {hasCapture && (mediaType === "screen" || mediaType === "camera") && (
-        <StreamVideo
-          stream={host.localStream}
-          muted
-          mirror={mediaType === "camera"}
-          className="w-full h-full object-contain"
-        />
-      )}
-
-      {/* Both mode: screen as main */}
-      {hasCapture && mediaType === "both" && host.screenStream && (
-        <StreamVideo
-          stream={host.screenStream}
-          muted
-          className="w-full h-full object-contain"
-        />
-      )}
-
-      {/* Both mode: camera PiP */}
-      {hasCapture && mediaType === "both" && host.cameraStream && (
-        <div className="absolute bottom-3 right-3 w-28 h-20 sm:w-36 sm:h-28 rounded-xl overflow-hidden border-2 border-white/20 shadow-2xl">
-          <StreamVideo
-            stream={host.cameraStream}
-            muted
-            mirror
-            className="w-full h-full object-cover"
-          />
+    <>
+      <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-1 rounded-md bg-red-500/90 text-white text-[10px] font-bold z-10">
+        <span className="relative w-1.5 h-1.5">
+          <span className="absolute inset-0 rounded-full bg-white" />
+          <span className="absolute inset-0 rounded-full bg-white animate-ping opacity-75" />
+        </span>
+        LIVE
+      </div>
+      {mediaType !== "none" && (
+        <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-md bg-black/50 text-white/70 text-[10px] z-10">
+          {mediaType === "screen" && <><IconMonitor size={10} /> Screen</>}
+          {mediaType === "camera" && <><IconVideo size={10} /> Camera</>}
+          {mediaType === "both" && <><IconLayers size={10} /> Both</>}
         </div>
       )}
-
-      {/* No capture — start button */}
-      {!hasCapture && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-          <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center">
-            {mediaType === "screen" && <IconMonitor size={28} className="text-white/60" />}
-            {mediaType === "camera" && <IconVideo size={28} className="text-white/60" />}
-            {mediaType === "both" && <IconLayers size={28} className="text-white/60" />}
-          </div>
-          {host.error ? (
-            <p className="text-xs text-red-400 text-center px-4">{host.error}</p>
-          ) : host.capturing ? (
-            <p className="text-xs text-white/50">Starting capture...</p>
-          ) : (
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => host.startCapture(mediaType)}
-              className="px-4 py-2 rounded-full bg-red-500 text-white text-xs font-semibold hover:bg-red-600 transition-colors"
-            >
-              Start{" "}
-              {mediaType === "both"
-                ? "Screen & Camera"
-                : mediaType === "screen"
-                ? "Screen Share"
-                : "Camera"}
-            </motion.button>
-          )}
-        </div>
-      )}
-
-      <Badges mediaType={mediaType} />
-    </div>
+    </>
   );
 }
 
-// ─── Viewer Video Display ───
-function ViewerVideoDisplay({
+// ─── Video Player Component ───
+function LiveVideoPlayer({
   mediaType,
+  isHost,
+  host,
   viewer,
   hostUser,
 }: {
   mediaType: MediaSourceType;
+  isHost: boolean;
+  host: ReturnType<typeof useWebRTCHost>;
   viewer: ReturnType<typeof useWebRTCViewer>;
   hostUser: any;
 }) {
+  // Chat-only mode — no video player
   if (mediaType === "none") return null;
 
+  const aspectRatio = mediaType === "camera" ? "4/3" : "16/9";
+
+  // ── HOST VIEW ──
+  if (isHost) {
+    const hasCapture = !!host.localStream && host.localStream.getTracks().length > 0;
+
+    return (
+      <div
+        className="relative w-full bg-black overflow-hidden flex-shrink-0"
+        style={{ aspectRatio, maxHeight: "40vh" }}
+      >
+        {hasCapture ? (
+          <>
+            {/* Main video: screen or camera */}
+            {(mediaType === "screen" || mediaType === "camera") && (
+              <StreamVideo
+                stream={host.localStream}
+                muted
+                mirror={mediaType === "camera"}
+                className="w-full h-full object-contain"
+              />
+            )}
+
+            {/* Both mode: screen as main */}
+            {mediaType === "both" && host.screenStream && (
+              <StreamVideo
+                stream={host.screenStream}
+                muted
+                className="w-full h-full object-contain"
+              />
+            )}
+
+            {/* Both mode: camera PiP */}
+            {mediaType === "both" && host.cameraStream && (
+              <div className="absolute bottom-3 right-3 w-28 h-20 sm:w-36 sm:h-28 rounded-xl overflow-hidden border-2 border-white/20 shadow-2xl z-10">
+                <StreamVideo
+                  stream={host.cameraStream}
+                  muted
+                  mirror
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+            <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center">
+              {mediaType === "screen" && <IconMonitor size={28} className="text-white/60" />}
+              {mediaType === "camera" && <IconVideo size={28} className="text-white/60" />}
+              {mediaType === "both" && <IconLayers size={28} className="text-white/60" />}
+            </div>
+            {host.error ? (
+              <p className="text-xs text-red-400 text-center px-4">{host.error}</p>
+            ) : host.capturing ? (
+              <p className="text-xs text-white/50">Starting capture...</p>
+            ) : (
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => host.startCapture(mediaType)}
+                className="px-4 py-2 rounded-full bg-red-500 text-white text-xs font-semibold hover:bg-red-600 transition-colors"
+              >
+                Start{" "}
+                {mediaType === "both"
+                  ? "Screen & Camera"
+                  : mediaType === "screen"
+                  ? "Screen Share"
+                  : "Camera"}
+              </motion.button>
+            )}
+          </div>
+        )}
+
+        <LiveBadges mediaType={mediaType} />
+      </div>
+    );
+  }
+
+  // ── VIEWER VIEW ──
   return (
     <div
-      className="relative w-full bg-black/95 overflow-hidden"
-      style={{ aspectRatio: mediaType === "camera" ? "4/3" : "16/9", maxHeight: "40vh" }}
+      className="relative w-full bg-black overflow-hidden flex-shrink-0"
+      style={{ aspectRatio, maxHeight: "40vh" }}
     >
       {viewer.connected && viewer.remoteStream ? (
         <StreamVideo
@@ -191,28 +214,8 @@ function ViewerVideoDisplay({
         </div>
       )}
 
-      <Badges mediaType={mediaType} />
+      <LiveBadges mediaType={mediaType} />
     </div>
-  );
-}
-
-// ─── Shared badges ───
-function Badges({ mediaType }: { mediaType: MediaSourceType }) {
-  return (
-    <>
-      <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-1 rounded-md bg-red-500/90 text-white text-[10px] font-bold">
-        <span className="relative w-1.5 h-1.5">
-          <span className="absolute inset-0 rounded-full bg-white" />
-          <span className="absolute inset-0 rounded-full bg-white animate-ping opacity-75" />
-        </span>
-        LIVE
-      </div>
-      <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-md bg-black/50 text-white/70 text-[10px]">
-        {mediaType === "screen" && <><IconMonitor size={10} /> Screen</>}
-        {mediaType === "camera" && <><IconVideo size={10} /> Camera</>}
-        {mediaType === "both" && <><IconLayers size={10} /> Both</>}
-      </div>
-    </>
   );
 }
 
@@ -316,7 +319,7 @@ function StreamEndedOverlay() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="absolute inset-0 z-10 flex items-center justify-center bg-background/90 backdrop-blur-sm"
+      className="absolute inset-0 z-20 flex items-center justify-center bg-background/90 backdrop-blur-sm"
     >
       <div className="text-center">
         <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
@@ -367,7 +370,7 @@ export default function LiveStreamPage() {
   const pinnedMessage = messages.find((m) => m.is_pinned);
   const mediaType: MediaSourceType = (currentStream?.media_type as MediaSourceType) ?? "none";
 
-  // WebRTC hooks — enabled based on host/viewer role
+  // WebRTC hooks
   const host = useWebRTCHost(streamId, user?.id, isHost);
   const viewer = useWebRTCViewer(
     streamId,
@@ -436,7 +439,7 @@ export default function LiveStreamPage() {
     <AppShell>
       <div className="max-w-2xl mx-auto relative flex flex-col h-[calc(100vh-8rem)] lg:h-[calc(100vh-2rem)]">
         {/* Header */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-muted">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-muted flex-shrink-0">
           <button
             onClick={() => navigate("/live")}
             className="p-1 -ml-1 text-muted-foreground hover:text-foreground transition-colors"
@@ -452,9 +455,7 @@ export default function LiveStreamPage() {
               )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold truncate">
-                    {currentStream.title}
-                  </p>
+                  <p className="text-sm font-semibold truncate">{currentStream.title}</p>
                   {!isEnded && (
                     <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-500 text-[10px] font-bold flex-shrink-0">
                       <span className="relative w-1.5 h-1.5">
@@ -483,7 +484,7 @@ export default function LiveStreamPage() {
               </div>
             </div>
           )}
-          {/* End Stream — always visible for host, outside the loading conditional */}
+          {/* End Stream button — always in header for host */}
           {isHost && !isEnded && (
             <motion.button
               whileTap={{ scale: 0.95 }}
@@ -496,18 +497,14 @@ export default function LiveStreamPage() {
           )}
         </div>
 
-        {/* Video display — show for any media type, regardless of host/viewer */}
-        {mediaType !== "none" && (
-          isHost ? (
-            <HostVideoDisplay mediaType={mediaType} host={host} />
-          ) : (
-            <ViewerVideoDisplay
-              mediaType={mediaType}
-              viewer={viewer}
-              hostUser={currentStream?.user}
-            />
-          )
-        )}
+        {/* Video Player — always rendered, handles its own states */}
+        <LiveVideoPlayer
+          mediaType={mediaType}
+          isHost={isHost}
+          host={host}
+          viewer={viewer}
+          hostUser={currentStream?.user}
+        />
 
         {/* Pinned message */}
         <AnimatePresence>
@@ -539,9 +536,9 @@ export default function LiveStreamPage() {
           <div ref={chatEndRef} />
         </div>
 
-        {/* Input */}
+        {/* Chat Input */}
         {!isEnded && (
-          <div className="px-4 py-3 border-t border-muted">
+          <div className="px-4 py-3 border-t border-muted flex-shrink-0">
             <div className="flex items-center gap-2">
               <input
                 type="text"
