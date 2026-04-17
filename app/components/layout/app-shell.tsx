@@ -105,7 +105,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="p-3">
           <button
             onClick={toggle}
-            className="ghost-btn flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-lg transition-colors"
+            className="ghost-btn flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
             <AnimatePresence mode="wait">
               {resolved === 'dark' ? (
@@ -142,7 +142,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
           <button
             onClick={toggle}
-            className="ghost-btn p-2 text-muted-foreground hover:text-foreground transition-colors"
+            className="ghost-btn p-2 rounded-full text-muted-foreground hover:text-foreground transition-colors"
           >
             <AnimatePresence mode="wait">
               {resolved === 'dark' ? (

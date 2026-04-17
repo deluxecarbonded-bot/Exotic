@@ -542,7 +542,7 @@ export default function ProfilePage({ params }: Route.ComponentProps) {
               )}
               <motion.button
                 whileTap={{ scale: 0.9 }}
-                className="ghost-btn p-2 text-muted-foreground hover:text-foreground transition-colors"
+                className="ghost-btn p-2 rounded-full text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setShowShare(true)}
               >
                 <IconShare size={18} />
