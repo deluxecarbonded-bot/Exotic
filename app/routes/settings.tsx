@@ -349,15 +349,17 @@ export default function Settings() {
         setPasswordResetLoading(false);
         return;
       }
-      const { error } = await supabase.auth.resetPasswordForEmail(
-        authUser.email,
-        { redirectTo: `${window.location.origin}/settings` }
-      );
-      if (error) {
-        setPasswordResetError(error.message);
+      const res = await fetch("/api/send-reset-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: authUser.email }),
+      });
+      let result: any = {};
+      try { result = await res.json(); } catch { /* ignore */ }
+      if (!res.ok || result.error) {
+        setPasswordResetError(result.error ?? "Failed to send reset email.");
       } else {
-        setPasswordResetSent(true);
-        setTimeout(() => setPasswordResetSent(false), 5000);
+        navigate(`/verify-reset-code?email=${encodeURIComponent(authUser.email)}`);
       }
     } catch (e: any) {
       setPasswordResetError(e?.message ?? "Something went wrong");
@@ -612,7 +614,7 @@ export default function Settings() {
                 <div>
                   <h3 className="text-sm font-medium">Reset Password</h3>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    We'll send a password reset link to{" "}
+                    We'll send a reset code to{" "}
                     <span className="font-medium text-foreground">
                       {userEmail || "your email"}
                     </span>
@@ -620,12 +622,6 @@ export default function Settings() {
                 </div>
 
                 <AnimatePresence>
-                  {passwordResetSent && (
-                    <StatusBanner
-                      type="success"
-                      message="Password reset email sent! Check your inbox."
-                    />
-                  )}
                   {passwordResetError && (
                     <StatusBanner
                       type="error"
@@ -639,7 +635,7 @@ export default function Settings() {
                   variant="outline"
                   size="xl"
                   onClick={handleResetPassword}
-                  disabled={passwordResetLoading || passwordResetSent}
+                  disabled={passwordResetLoading}
                   className="w-full"
                 >
                   {passwordResetLoading ? (
@@ -655,13 +651,9 @@ export default function Settings() {
                       />
                       Sending...
                     </span>
-                  ) : passwordResetSent ? (
-                    <span className="flex items-center gap-1.5">
-                      <IconCheck size={16} /> Email sent
-                    </span>
                   ) : (
                     <span className="flex items-center gap-1.5">
-                      <IconKey size={16} /> Send reset link
+                      <IconKey size={16} /> Send reset code
                     </span>
                   )}
                 </Button>

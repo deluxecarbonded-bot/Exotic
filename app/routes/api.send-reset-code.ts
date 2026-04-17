@@ -1,5 +1,6 @@
 import type { Route } from "./+types/api.send-reset-code";
 import { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } from "~/lib/supabase-admin";
+import { sendEmail } from "~/lib/resend";
 
 function generateCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -10,13 +11,10 @@ function generateCode(): string {
   return code;
 }
 
-export async function action({ request, context }: Route.ActionArgs) {
+export async function action({ request }: Route.ActionArgs) {
   try {
     const { email } = await request.json();
     if (!email) return Response.json({ error: "Email is required" }, { status: 400 });
-
-    const env = ((context as any)?.cloudflare?.env ?? process.env) as any;
-    const RESEND_KEY = env.INT_RESEND_API_KEY || env.RESEND_API_KEY;
 
     const searchRes = await fetch(
       `${SUPABASE_URL}/auth/v1/admin/users?page=1&per_page=1000`,
@@ -25,6 +23,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     const { users } = await searchRes.json() as any;
     const user = (users ?? []).find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
 
+    // Always return success — don't reveal if email exists
     if (!user) return Response.json({ ok: true });
 
     const code = generateCode();
@@ -47,15 +46,13 @@ export async function action({ request, context }: Route.ActionArgs) {
       }),
     });
 
-    if (!RESEND_KEY) {
-      console.log(`[DEV] Reset code for ${email}: ${code}`);
-      return Response.json({ ok: true, dev_code: code });
-    }
-
     const appUrl = new URL(request.url).origin;
     const verifyUrl = `${appUrl}/verify-reset-code?email=${encodeURIComponent(email)}`;
 
-    const emailHtml = `
+    await sendEmail({
+      to: email,
+      subject: `Your Exotic reset code: ${code}`,
+      html: `
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -96,20 +93,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     </td></tr>
   </table>
 </body>
-</html>`;
-
-    await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${RESEND_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: "Exotic <noreply@resend.dev>",
-        to: [email],
-        subject: `Your Exotic reset code: ${code}`,
-        html: emailHtml,
-      }),
+</html>`,
     });
 
     return Response.json({ ok: true });
