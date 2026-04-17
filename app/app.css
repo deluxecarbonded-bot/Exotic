@@ -657,62 +657,40 @@ html.liquid-glass.dark .anon-avatar {
 }
 
 /* ──────────────────────────────────────────────────
-   12. LOGO SVG BUBBLE
+   12. LOGO ICON
 ────────────────────────────────────────────────── */
 
-/* Normal mode — solid bubble */
-.logo-bubble-body {
-  fill: var(--foreground);
-}
-.logo-bubble-icon {
-  stroke: var(--background);
-  fill: none;
-}
-.logo-bubble-icon-dot {
-  fill: var(--background);
-}
-.logo-bubble-highlight {
-  display: none;
+/* Normal mode — black in light, white in dark */
+.logo-icon-svg {
+  color: #000000;
+  fill: #000000;
+  transition: color 0.35s ease, fill 0.35s ease, filter 0.35s ease;
 }
 
-/* Liquid glass — SVG itself gets backdrop blur, bubble fill goes translucent */
-html.liquid-glass .logo-svg {
+.dark .logo-icon-svg {
+  color: #ffffff;
+  fill: #ffffff;
+}
+
+/* Liquid glass mode — frosted look on the SVG icon itself */
+html.liquid-glass .logo-icon {
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.12));
+}
+html.liquid-glass .logo-icon-svg {
+  color: rgba(30, 30, 40, 0.82);
+  fill: rgba(255, 255, 255, 0.22);
+  stroke: rgba(255, 255, 255, 0.70);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.13));
-}
-html.liquid-glass .logo-bubble-body {
-  fill: rgba(255, 255, 255, 0.22);
-  stroke: rgba(255, 255, 255, 0.65);
-  stroke-width: 0.7px;
-}
-html.liquid-glass .logo-bubble-highlight {
-  display: block;
-  fill: rgba(255, 255, 255, 0.38);
-}
-html.liquid-glass .logo-bubble-icon {
-  stroke: #1a1a1a;
-}
-html.liquid-glass .logo-bubble-icon-dot {
-  fill: #1a1a1a;
 }
 
-/* Dark glass */
-html.liquid-glass.dark .logo-svg {
-  filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.40));
+html.liquid-glass.dark .logo-icon {
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45));
 }
-html.liquid-glass.dark .logo-bubble-body {
+html.liquid-glass.dark .logo-icon-svg {
+  color: rgba(240, 240, 255, 0.90);
   fill: rgba(255, 255, 255, 0.10);
-  stroke: rgba(255, 255, 255, 0.22);
-}
-html.liquid-glass.dark .logo-bubble-highlight {
-  fill: rgba(255, 255, 255, 0.14);
-}
-html.liquid-glass.dark .logo-bubble-icon {
-  stroke: #f0f0f0;
-}
-html.liquid-glass.dark .logo-bubble-icon-dot {
-  fill: #f0f0f0;
+  stroke: rgba(255, 255, 255, 0.25);
 }
 
 /* ──────────────────────────────────────────────────
@@ -723,8 +701,7 @@ html.liquid-glass header,
 html.liquid-glass nav,
 html.liquid-glass .bg-card,
 html.liquid-glass button,
-html.liquid-glass .logo-svg,
-html.liquid-glass .logo-bubble-body,
+html.liquid-glass .logo-icon-svg,
 html.liquid-glass .prompt-card,
 html.liquid-glass .user-avatar,
 html.liquid-glass .avatar-img,
