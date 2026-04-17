@@ -97,12 +97,16 @@ function CommentItem({
             <span className="text-sm leading-snug break-words">{comment.content}</span>
           </div>
           {/* Like button */}
-          <button onClick={handleLike} className="flex flex-col items-center flex-shrink-0 pt-0.5">
+          <button
+            onClick={handleLike}
+            className="ghost-btn flex flex-col items-center flex-shrink-0 pt-0.5"
+            style={{ background: 'none', border: 'none', boxShadow: 'none', backdropFilter: 'none', padding: 0 }}
+          >
             <motion.div whileTap={{ scale: 0.8 }}>
               <IconHeart
                 size={13}
                 filled={liked}
-                className={liked ? 'text-foreground' : 'text-muted-foreground'}
+                className={liked ? 'text-red-500' : 'text-muted-foreground'}
               />
             </motion.div>
             {likeCount > 0 && (
@@ -116,14 +120,16 @@ function CommentItem({
           <span className="text-[11px] text-muted-foreground">{timeAgo(comment.created_at)}</span>
           <button
             onClick={() => onReply(comment.user?.username ?? '', comment.id)}
-            className="text-[11px] text-muted-foreground hover:text-foreground font-medium transition-colors"
+            className="ghost-btn text-[11px] text-muted-foreground hover:text-foreground font-medium transition-colors"
+            style={{ background: 'none', border: 'none', boxShadow: 'none', backdropFilter: 'none', padding: 0 }}
           >
             Reply
           </button>
           {isOwner && (
             <button
               onClick={() => onDelete(comment.id)}
-              className="text-[11px] text-destructive/70 hover:text-destructive font-medium transition-colors"
+              className="ghost-btn text-[11px] text-destructive/70 hover:text-destructive font-medium transition-colors"
+              style={{ background: 'none', border: 'none', boxShadow: 'none', backdropFilter: 'none', padding: 0 }}
             >
               Delete
             </button>
