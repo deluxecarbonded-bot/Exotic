@@ -660,16 +660,10 @@ html.liquid-glass.dark .anon-avatar {
    12. LOGO ICON
 ────────────────────────────────────────────────── */
 
-/* Normal mode — black in light, white in dark */
+/* Normal mode — follows foreground color (black light / white dark) */
 .logo-icon-svg {
-  color: #000000;
-  fill: #000000;
-  transition: color 0.35s ease, fill 0.35s ease, filter 0.35s ease;
-}
-
-.dark .logo-icon-svg {
-  color: #ffffff;
-  fill: #ffffff;
+  color: var(--foreground);
+  transition: color 0.35s ease, filter 0.35s ease;
 }
 
 /* Liquid glass mode — frosted look on the SVG icon itself */
@@ -677,9 +671,7 @@ html.liquid-glass .logo-icon {
   filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.12));
 }
 html.liquid-glass .logo-icon-svg {
-  color: rgba(30, 30, 40, 0.82);
-  fill: rgba(255, 255, 255, 0.22);
-  stroke: rgba(255, 255, 255, 0.70);
+  color: rgba(28, 28, 38, 0.88);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
 }
@@ -688,9 +680,7 @@ html.liquid-glass.dark .logo-icon {
   filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45));
 }
 html.liquid-glass.dark .logo-icon-svg {
-  color: rgba(240, 240, 255, 0.90);
-  fill: rgba(255, 255, 255, 0.10);
-  stroke: rgba(255, 255, 255, 0.25);
+  color: rgba(240, 240, 255, 0.92);
 }
 
 /* ──────────────────────────────────────────────────
