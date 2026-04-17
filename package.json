@@ -6,7 +6,7 @@
 	"scripts": {
 		"build": "react-router build",
 		"cf-typegen": "bun wrangler types",
-		"postinstall": "bun run cf-typegen",
+		"postinstall": "node -e \"if(!process.env.VERCEL) require('child_process').execSync('bun run cf-typegen', {stdio:'inherit'})\"",
 		"deploy": "bun run build && bun wrangler deploy --dispatch-namespace chiridion",
 		"dev": "react-router dev",
 		"preview": "bun run build && vite preview",
