@@ -1,11 +1,9 @@
 import type { Route } from "./+types/inbox";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "~/components/layout/app-shell";
 import { QuestionCard, EmptyState } from "~/components/cards";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "~/components/ui/tabs";
-import { Badge } from "~/components/ui/badge";
-import { IconInbox, IconCheck, IconX } from "~/components/icons";
+import { IconInbox } from "~/components/icons";
 import { useQuestionStore } from "~/stores/question-store";
 import { useAuthStore } from "~/stores/auth-store";
 import type { Question } from "~/types";
@@ -112,28 +110,11 @@ export default function InboxPage() {
   const { inbox, isLoading, answerQuestion, deleteQuestion, fetchInbox } =
     useQuestionStore();
   const { user } = useAuthStore();
-  const [activeTab, setActiveTab] = useState("pending");
   const [answeringId, setAnsweringId] = useState<string | null>(null);
 
-  // Fetch inbox on mount
   useEffect(() => {
-    if (user?.id) {
-      fetchInbox(user.id);
-    }
+    if (user?.id) fetchInbox(user.id);
   }, [user?.id]);
-
-  const pendingQuestions = useMemo(
-    () => inbox.filter((q) => !q.is_answered),
-    [inbox]
-  );
-  const answeredQuestions = useMemo(
-    () => inbox.filter((q) => q.is_answered),
-    [inbox]
-  );
-
-  const handleAnswer = (id: string) => {
-    setAnsweringId(id);
-  };
 
   const handleSubmitAnswer = async (questionId: string, content: string) => {
     if (!user?.id) return;
@@ -151,126 +132,51 @@ export default function InboxPage() {
         <div className="px-4 pt-4 pb-2">
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-bold">Inbox</h1>
-            {pendingQuestions.length > 0 && (
+            {inbox.length > 0 && (
               <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-full bg-foreground text-background">
-                {pendingQuestions.length}
+                {inbox.length}
               </span>
             )}
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="px-4">
-            <TabsList variant="line" className="w-full !h-11">
-              <TabsTrigger value="pending" className="flex-1 gap-2 text-sm">
-                Pending
-                {pendingQuestions.length > 0 && (
-                  <Badge
-                    variant="default"
-                    className="ml-1 text-[10px] h-4 min-w-[16px] px-1"
-                  >
-                    {pendingQuestions.length}
-                  </Badge>
+        <AnimatePresence mode="wait">
+          {isLoading ? (
+            <motion.div key="skeleton" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <InboxSkeleton />
+            </motion.div>
+          ) : inbox.length === 0 ? (
+            <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <EmptyState
+                icon={IconInbox}
+                title="No pending questions"
+                description="Share your profile link to start receiving anonymous questions from anyone."
+              />
+            </motion.div>
+          ) : (
+            <div key="list" className="divide-y divide-muted/50">
+              <AnimatePresence>
+                {inbox.map((question) =>
+                  answeringId === question.id ? (
+                    <AnswerForm
+                      key={`answer-${question.id}`}
+                      question={question}
+                      onSubmit={(content) => handleSubmitAnswer(question.id, content)}
+                      onCancel={() => setAnsweringId(null)}
+                    />
+                  ) : (
+                    <QuestionCard
+                      key={question.id}
+                      question={question}
+                      onAnswer={(id) => setAnsweringId(id)}
+                      onDelete={handleDelete}
+                    />
+                  )
                 )}
-              </TabsTrigger>
-              <TabsTrigger value="answered" className="flex-1 text-sm">
-                Answered
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          <TabsContent value="pending">
-            <AnimatePresence mode="wait">
-              {isLoading ? (
-                <motion.div
-                  key="skeleton"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <InboxSkeleton />
-                </motion.div>
-              ) : pendingQuestions.length === 0 ? (
-                <motion.div
-                  key="empty"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <EmptyState
-                    icon={IconInbox}
-                    title="No pending questions"
-                    description="Share your profile link to start receiving anonymous questions from anyone."
-                  />
-                </motion.div>
-              ) : (
-                <div
-                  key="list"
-                  className="divide-y divide-muted/50"
-                >
-                  <AnimatePresence>
-                    {pendingQuestions.map((question) =>
-                      answeringId === question.id ? (
-                        <AnswerForm
-                          key={`answer-${question.id}`}
-                          question={question}
-                          onSubmit={(content) =>
-                            handleSubmitAnswer(question.id, content)
-                          }
-                          onCancel={() => setAnsweringId(null)}
-                        />
-                      ) : (
-                        <QuestionCard
-                          key={question.id}
-                          question={question}
-                          onAnswer={handleAnswer}
-                          onDelete={handleDelete}
-                        />
-                      )
-                    )}
-                  </AnimatePresence>
-                </div>
-              )}
-            </AnimatePresence>
-          </TabsContent>
-
-          <TabsContent value="answered">
-            <AnimatePresence mode="wait">
-              {isLoading ? (
-                <motion.div
-                  key="skeleton"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <InboxSkeleton />
-                </motion.div>
-              ) : answeredQuestions.length === 0 ? (
-                <motion.div
-                  key="empty"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <EmptyState
-                    icon={IconCheck}
-                    title="No answered questions yet"
-                    description="Questions you answer will appear here. Start by answering some pending questions."
-                  />
-                </motion.div>
-              ) : (
-                <div
-                  key="list"
-                  className="divide-y divide-muted/50"
-                >
-                  {answeredQuestions.map((question) => (
-                    <QuestionCard key={question.id} question={question} />
-                  ))}
-                </div>
-              )}
-            </AnimatePresence>
-          </TabsContent>
-        </Tabs>
+              </AnimatePresence>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     </AppShell>
   );

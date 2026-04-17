@@ -200,13 +200,13 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
 
     await supabase
       .from('questions')
-      .update({ is_answered: true })
+      .delete()
       .eq('id', questionId);
 
     if (answer) {
       set((s) => ({
         feed: [{ ...answer, is_liked: false, shares_count: 0 } as Answer, ...s.feed],
-        inbox: s.inbox.map((q) => q.id === questionId ? { ...q, is_answered: true } : q),
+        inbox: s.inbox.filter((q) => q.id !== questionId),
       }));
     }
   },
