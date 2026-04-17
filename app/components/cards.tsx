@@ -10,6 +10,8 @@ import { useAuthStore } from '~/stores/auth-store';
 import { UserAvatar, AnonAvatar } from '~/components/user-avatar';
 import { VerifiedBadge, OwnerBadge } from '~/components/badges';
 import { parseMediaType } from '~/components/media-editor';
+import { CommentsModal } from '~/components/comments-modal';
+import { ShareModal } from '~/components/share-modal';
 import type { Answer, Question, User, Post } from '~/types';
 
 function CopyLinkButton({ url, onDone }: { url: string; onDone: () => void }) {
@@ -295,10 +297,14 @@ export function PostCard({ post }: { post: Post }) {
   const { toggleLike, deletePost } = usePostStore();
   const [liked, setLiked] = useState(post.is_liked);
   const [likesCount, setLikesCount] = useState(post.likes_count);
+  const [commentsCount, setCommentsCount] = useState(post.comments_count);
   const [showMenu, setShowMenu] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const [activeMedia, setActiveMedia] = useState(0);
   const [hidden, setHidden] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [copyDone, setCopyDone] = useState(false);
 
   const handleLike = async () => {
     if (!user?.id) return;
@@ -320,14 +326,17 @@ export function PostCard({ post }: { post: Post }) {
 
   const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/profile/${post.user?.username}`;
 
-  const handleShare = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: `${post.user?.display_name}'s post on Exotic`, url: postUrl });
-      } else {
-        navigator.clipboard.writeText(postUrl);
-      }
-    } catch {}
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(postUrl).catch(() => {
+      const el = document.createElement('input');
+      el.value = postUrl;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    });
+    setCopyDone(true);
+    setTimeout(() => { setCopyDone(false); setShowMenu(false); }, 1200);
   };
 
   const isOwner = user?.id === post.user_id;
@@ -349,140 +358,174 @@ export function PostCard({ post }: { post: Post }) {
   if (hidden || deleting) return null;
 
   return (
-    <motion.article className="p-4 sm:p-5" variants={staggerItemVariants}>
-      {/* User header */}
-      {post.user && (
-        <div className="flex items-center justify-between mb-3">
-          <Link to={`/profile/${post.user.username}`} className="flex items-center gap-2">
-            <UserAvatar user={post.user} size="sm" />
-            <div>
-              <span className="text-sm font-semibold">{post.user.display_name}</span>
-              {post.user.is_owner && <OwnerBadge />}
-              {post.user.is_verified && <VerifiedBadge />}
-              <span className="text-xs text-muted-foreground ml-2">@{post.user.username}</span>
-            </div>
-          </Link>
-          <span className="text-xs text-muted-foreground">{formatTimeAgo(post.created_at)}</span>
-        </div>
-      )}
+    <>
+      <CommentsModal
+        open={showComments}
+        onClose={() => setShowComments(false)}
+        postId={post.id}
+        onCommentCountChange={setCommentsCount}
+      />
+      <ShareModal
+        open={showShare}
+        onClose={() => setShowShare(false)}
+        url={postUrl}
+        text={`Check out ${post.user?.display_name ?? 'this'}'s post on Exotic!`}
+      />
 
-      {/* Media */}
-      {post.media_urls.length > 0 && (() => {
-        const raw = post.media_types[activeMedia] ?? 'image';
-        const { isVideo, filter, zoom } = parseMediaType(raw);
-        const mediaStyle: React.CSSProperties = {
-          filter: filter !== 'none' ? filter : undefined,
-          transform: zoom !== 1 ? `scale(${zoom})` : undefined,
-          transition: 'filter 0.2s, transform 0.2s',
-        };
-        return (
-          <div className="relative rounded-xl overflow-hidden mb-3 bg-muted">
-            {isVideo ? (
-              <video
-                src={post.media_urls[activeMedia]}
-                controls
-                className="w-full max-h-[500px] object-contain"
-                preload="metadata"
-                style={mediaStyle}
-              />
-            ) : (
-              <img
-                src={post.media_urls[activeMedia]}
-                alt=""
-                className="w-full max-h-[500px] object-contain"
-                loading="lazy"
-                style={mediaStyle}
-              />
-            )}
-            {post.media_urls.length > 1 && (
-              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-                {post.media_urls.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveMedia(i)}
-                    className={`w-1.5 h-1.5 rounded-full transition-colors ${i === activeMedia ? 'bg-white' : 'bg-white/50'}`}
-                  />
-                ))}
+      <motion.article className="p-4 sm:p-5" variants={staggerItemVariants}>
+        {/* User header */}
+        {post.user && (
+          <div className="flex items-center justify-between mb-3">
+            <Link to={`/profile/${post.user.username}`} className="flex items-center gap-2">
+              <UserAvatar user={post.user} size="sm" />
+              <div>
+                <span className="text-sm font-semibold">{post.user.display_name}</span>
+                {post.user.is_owner && <OwnerBadge />}
+                {post.user.is_verified && <VerifiedBadge />}
+                <span className="text-xs text-muted-foreground ml-2">@{post.user.username}</span>
               </div>
-            )}
+            </Link>
+            <span className="text-xs text-muted-foreground">{formatTimeAgo(post.created_at)}</span>
           </div>
-        );
-      })()}
+        )}
 
-      {/* Caption */}
-      {post.caption && <p className="text-sm leading-relaxed mb-3">{post.caption}</p>}
+        {/* Media */}
+        {post.media_urls.length > 0 && (() => {
+          const raw = post.media_types[activeMedia] ?? 'image';
+          const { isVideo, filter, zoom } = parseMediaType(raw);
+          const mediaStyle: React.CSSProperties = {
+            filter: filter !== 'none' ? filter : undefined,
+            transform: zoom !== 1 ? `scale(${zoom})` : undefined,
+            transition: 'filter 0.2s, transform 0.2s',
+          };
+          return (
+            <div className="relative rounded-xl overflow-hidden mb-3 bg-muted">
+              {isVideo ? (
+                <video
+                  src={post.media_urls[activeMedia]}
+                  controls
+                  className="w-full max-h-[500px] object-contain"
+                  preload="metadata"
+                  style={mediaStyle}
+                />
+              ) : (
+                <img
+                  src={post.media_urls[activeMedia]}
+                  alt=""
+                  className="w-full max-h-[500px] object-contain"
+                  loading="lazy"
+                  style={mediaStyle}
+                />
+              )}
+              {post.media_urls.length > 1 && (
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+                  {post.media_urls.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveMedia(i)}
+                      className={`w-1.5 h-1.5 rounded-full transition-colors ${i === activeMedia ? 'bg-white' : 'bg-white/50'}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
-      {/* Actions — clean flat style, no glass */}
-      <div className="flex items-center gap-5 text-muted-foreground">
-        <motion.button
-          className="flex items-center gap-1.5 text-xs hover:text-foreground transition-colors"
-          onClick={handleLike}
-          whileTap={{ scale: 0.88 }}
-        >
-          <motion.div animate={liked ? heartBeat : {}}>
-            <IconHeart size={17} filled={liked} className={liked ? 'text-foreground' : ''} />
-          </motion.div>
-          {likesCount > 0 && <span>{likesCount}</span>}
-        </motion.button>
+        {/* Caption */}
+        {post.caption && <p className="text-sm leading-relaxed mb-3">{post.caption}</p>}
 
-        <button className="flex items-center gap-1.5 text-xs hover:text-foreground transition-colors">
-          <IconMessageCircle size={17} />
-          {post.comments_count > 0 && <span>{post.comments_count}</span>}
-        </button>
-
-        <button
-          className="flex items-center gap-1.5 text-xs hover:text-foreground transition-colors"
-          onClick={handleShare}
-        >
-          <IconShare size={17} />
-        </button>
-
-        {/* Three-dot menu */}
-        <div className="relative ml-auto">
-          <button
-            className="p-1 hover:text-foreground transition-colors"
-            onClick={() => setShowMenu(!showMenu)}
+        {/* Actions — clean flat style */}
+        <div className="flex items-center gap-5 text-muted-foreground">
+          {/* Like */}
+          <motion.button
+            className="flex items-center gap-1.5 text-xs hover:text-foreground transition-colors"
+            onClick={handleLike}
+            whileTap={{ scale: 0.88 }}
           >
-            <IconMoreHorizontal size={17} />
+            <motion.div animate={liked ? heartBeat : {}}>
+              <IconHeart size={17} filled={liked} className={liked ? 'text-foreground' : ''} />
+            </motion.div>
+            {likesCount > 0 && <span>{likesCount}</span>}
+          </motion.button>
+
+          {/* Comments */}
+          <button
+            className="flex items-center gap-1.5 text-xs hover:text-foreground transition-colors"
+            onClick={() => setShowComments(true)}
+          >
+            <IconMessageCircle size={17} />
+            {commentsCount > 0 && <span>{commentsCount}</span>}
           </button>
-          <AnimatePresence>
-            {showMenu && (
-              <>
-                <div className="fixed inset-0 z-[9]" onClick={() => setShowMenu(false)} />
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.92, y: -4 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.92, y: -4 }}
-                  transition={{ duration: 0.12 }}
-                  className="absolute right-0 top-8 w-44 bg-background rounded-xl z-10 py-1.5 overflow-hidden border border-border shadow-lg"
-                >
-                  <CopyLinkButton url={postUrl} onDone={() => setShowMenu(false)} />
-                  <button
-                    className="flex items-center gap-2.5 w-full px-4 py-2.5 text-xs hover:bg-muted text-left transition-colors"
-                    onClick={handleHide}
+
+          {/* Share */}
+          <button
+            className="flex items-center gap-1.5 text-xs hover:text-foreground transition-colors"
+            onClick={() => setShowShare(true)}
+          >
+            <IconShare size={17} />
+          </button>
+
+          {/* Three-dot menu */}
+          <div className="relative ml-auto">
+            <button
+              className="p-1 hover:text-foreground transition-colors"
+              onClick={() => setShowMenu(!showMenu)}
+            >
+              <IconMoreHorizontal size={17} />
+            </button>
+            <AnimatePresence>
+              {showMenu && (
+                <>
+                  <div className="fixed inset-0 z-[9]" onClick={() => setShowMenu(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.92, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.92, y: -4 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute right-0 top-8 w-44 bg-background rounded-xl z-10 py-1.5 overflow-hidden border border-border shadow-lg"
                   >
-                    <IconEyeOff size={14} />
-                    Hide post
-                  </button>
-                  {isOwner && (
-                    <>
-                      <div className="my-1 border-t border-border" />
-                      <button
-                        className="flex items-center gap-2.5 w-full px-4 py-2.5 text-xs hover:bg-muted text-left text-destructive transition-colors"
-                        onClick={handleDelete}
-                      >
-                        <IconTrash size={14} />
-                        Delete post
-                      </button>
-                    </>
-                  )}
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
+                    {/* Copy link */}
+                    <button
+                      className="flex items-center gap-2.5 w-full px-4 py-2.5 text-xs hover:bg-muted text-left transition-colors"
+                      onClick={handleCopyLink}
+                    >
+                      {copyDone
+                        ? <IconCheck size={14} className="text-green-500" />
+                        : <IconCopy size={14} />}
+                      {copyDone ? 'Copied!' : 'Copy link'}
+                    </button>
+
+                    {/* Hide post */}
+                    <button
+                      className="flex items-center gap-2.5 w-full px-4 py-2.5 text-xs hover:bg-muted text-left transition-colors"
+                      onClick={handleHide}
+                    >
+                      <IconEyeOff size={14} />
+                      Hide post
+                    </button>
+
+                    {/* Delete — owner only */}
+                    {isOwner && (
+                      <>
+                        <div className="my-1 border-t border-border" />
+                        <button
+                          className="flex items-center gap-2.5 w-full px-4 py-2.5 text-xs hover:bg-muted text-left text-destructive transition-colors"
+                          onClick={handleDelete}
+                        >
+                          <IconTrash size={14} />
+                          Delete post
+                        </button>
+                      </>
+                    )}
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
-      </div>
-    </motion.article>
+      </motion.article>
+    </>
   );
 }
 
