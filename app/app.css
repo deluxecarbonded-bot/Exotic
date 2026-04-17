@@ -418,16 +418,28 @@ html.liquid-glass.dark [data-slot="button"][class*="bg-destructive"] {
 .ghost-btn:hover,
 .ghost-btn:focus,
 .ghost-btn:active,
+html .ghost-btn,
+html .ghost-btn:hover,
+html .ghost-btn:focus,
+html .ghost-btn:active,
 html.liquid-glass .ghost-btn,
 html.liquid-glass .ghost-btn:hover,
 html.liquid-glass .ghost-btn:focus,
-html.liquid-glass .ghost-btn:active {
+html.liquid-glass .ghost-btn:active,
+html.liquid-glass.dark .ghost-btn,
+html.liquid-glass.dark .ghost-btn:hover,
+html.liquid-glass.dark .ghost-btn:focus,
+html.liquid-glass.dark .ghost-btn:active {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  background: none !important;
   background-color: transparent !important;
   background-image: none !important;
   box-shadow: none !important;
   border: none !important;
+  outline: none !important;
+  padding: 0 !important;
+  color: inherit !important;
 }
 
 /* ── Ask button: keeps white/black bg with glass blur intact ── */
