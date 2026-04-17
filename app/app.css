@@ -657,6 +657,38 @@ html.liquid-glass.dark .anon-avatar {
 }
 
 /* ──────────────────────────────────────────────────
+   12. LOGO BUBBLE
+────────────────────────────────────────────────── */
+
+/* Base style — solid foreground bubble */
+.logo-bubble {
+  background-color: var(--foreground);
+  color: var(--background);
+  transition: background-color 0.35s ease, box-shadow 0.35s ease, backdrop-filter 0.35s ease;
+}
+
+/* Liquid glass override */
+html.liquid-glass .logo-bubble {
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  background-color: rgba(255, 255, 255, 0.28) !important;
+  color: #1a1a1a !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.70),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.06),
+    0 4px 16px rgba(0, 0, 0, 0.10) !important;
+}
+
+html.liquid-glass.dark .logo-bubble {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  color: #f0f0f0 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.30),
+    0 4px 16px rgba(0, 0, 0, 0.30) !important;
+}
+
+/* ──────────────────────────────────────────────────
    SMOOTH TOGGLE TRANSITION
 ────────────────────────────────────────────────── */
 html.liquid-glass aside,
@@ -664,6 +696,7 @@ html.liquid-glass header,
 html.liquid-glass nav,
 html.liquid-glass .bg-card,
 html.liquid-glass button,
+html.liquid-glass .logo-bubble,
 html.liquid-glass .prompt-card,
 html.liquid-glass .user-avatar,
 html.liquid-glass .avatar-img,

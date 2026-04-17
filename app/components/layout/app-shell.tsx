@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ExoticLogo, ExoticWordmark } from '~/components/logo';
+import { ExoticLogo } from '~/components/logo';
 import {
   IconHome,
   IconInbox,
@@ -52,9 +52,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="hidden lg:flex fixed top-0 left-0 bottom-0 z-40 w-64 flex-col bg-background">
         {/* Logo */}
         <div className="flex items-center gap-2.5 h-16 px-5">
-          <Link to="/" className="flex items-center gap-2.5">
-            <ExoticLogo size={28} />
-            <ExoticWordmark />
+          <Link to="/" className="flex items-center">
+            <ExoticLogo size={40} />
           </Link>
         </div>
 
@@ -134,9 +133,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Mobile/Tablet Header - hidden on desktop */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 backdrop-blur-xl">
         <div className="flex items-center justify-between h-14 px-4">
-          <Link to="/" className="flex items-center gap-2">
-            <ExoticLogo size={24} />
-            <ExoticWordmark className="text-base" />
+          <Link to="/" className="flex items-center">
+            <ExoticLogo size={34} />
           </Link>
           <button
             onClick={toggle}
