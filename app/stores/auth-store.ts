@@ -88,29 +88,35 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   login: async (username, password) => {
     set({ isLoading: true, error: null });
-    // Resolve username → email via server (uses service role key)
-    const res = await fetch('/api/resolve-username', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username }),
-    });
-    const resolved = await res.json();
-    if (!res.ok || !resolved.email) {
-      set({ isLoading: false, error: resolved.error ?? 'No account found with that username.' });
+    try {
+      const res = await fetch('/api/resolve-username', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username }),
+      });
+      const resolved = await res.json();
+      if (!res.ok || !resolved.email) {
+        set({ isLoading: false, error: resolved.error ?? 'No account found with that username.' });
+        return false;
+      }
+      const { data, error } = await supabase.auth.signInWithPassword({ email: resolved.email, password });
+      if (error) {
+        set({ isLoading: false, error: error.message });
+        return false;
+      }
+      if (data.user) {
+        const profile = await fetchProfile(data.user.id);
+        set({ user: profile, isAuthenticated: !!profile, isLoading: false });
+        if (profile) trackSession(profile.id);
+      } else {
+        set({ isLoading: false, error: 'Sign in failed. Please try again.' });
+        return false;
+      }
+      return true;
+    } catch {
+      set({ isLoading: false, error: 'Something went wrong. Please try again.' });
       return false;
     }
-    const { data, error } = await supabase.auth.signInWithPassword({ email: resolved.email, password });
-    if (error) {
-      set({ isLoading: false, error: error.message });
-      return false;
-    }
-    if (data.user) {
-      const profile = await fetchProfile(data.user.id);
-      set({ user: profile, isAuthenticated: !!profile, isLoading: false });
-      // Track session (IP, device, location) — fire and forget
-      if (profile) trackSession(profile.id);
-    }
-    return true;
   },
 
   register: async (username, displayName, email, password) => {
