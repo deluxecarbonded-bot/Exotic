@@ -11,7 +11,7 @@ interface PostState {
   fetchPosts: (followedIds?: string[]) => Promise<void>;
   fetchUserPosts: (userId: string) => Promise<Post[]>;
   fetchDiscoverPosts: () => Promise<Post[]>;
-  createPost: (userId: string, caption: string, mediaFiles: File[]) => Promise<void>;
+  createPost: (userId: string, caption: string, mediaFiles: File[], precomputedTypes?: string[]) => Promise<void>;
   deletePost: (postId: string) => Promise<void>;
   toggleLike: (postId: string, userId: string) => Promise<void>;
   checkLikes: (userId: string) => Promise<void>;
@@ -61,23 +61,25 @@ export const usePostStore = create<PostState>((set, get) => ({
     return (data ?? []).map((p: any) => ({ ...p, is_liked: false })) as Post[];
   },
 
-  createPost: async (userId, caption, mediaFiles) => {
+  createPost: async (userId, caption, mediaFiles, precomputedTypes?) => {
     const mediaUrls: string[] = [];
     const mediaTypes: string[] = [];
 
-    for (const file of mediaFiles) {
+    for (let i = 0; i < mediaFiles.length; i++) {
+      const file = mediaFiles[i];
       const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg';
       const filePath = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from('posts')
-        .upload(filePath, file, { contentType: file.type });
+        .upload(filePath, file, { contentType: file.type || 'application/octet-stream' });
 
       if (uploadError) throw new Error(uploadError.message);
 
       const { data: urlData } = supabase.storage.from('posts').getPublicUrl(filePath);
       mediaUrls.push(urlData.publicUrl);
-      mediaTypes.push(file.type.startsWith('video/') ? 'video' : 'image');
+      // Use precomputed type if provided (may encode video filter/zoom), else auto-detect
+      mediaTypes.push(precomputedTypes?.[i] ?? (file.type.startsWith('video/') ? 'video' : 'image'));
     }
 
     const { error } = await supabase.from('posts').insert({

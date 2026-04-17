@@ -9,6 +9,7 @@ import { useFollowStore } from '~/stores/follow-store';
 import { useAuthStore } from '~/stores/auth-store';
 import { UserAvatar, AnonAvatar } from '~/components/user-avatar';
 import { VerifiedBadge, OwnerBadge } from '~/components/badges';
+import { parseMediaType } from '~/components/media-editor';
 import type { Answer, Question, User, Post } from '~/types';
 
 function CopyLinkButton({ url, onDone }: { url: string; onDone: () => void }) {
@@ -322,10 +323,7 @@ export function PostCard({ post }: { post: Post }) {
   const handleShare = async () => {
     try {
       if (navigator.share) {
-        await navigator.share({
-          title: `${post.user?.display_name}'s post on Exotic`,
-          url: postUrl,
-        });
+        await navigator.share({ title: `${post.user?.display_name}'s post on Exotic`, url: postUrl });
       } else {
         navigator.clipboard.writeText(postUrl);
       }
@@ -351,10 +349,7 @@ export function PostCard({ post }: { post: Post }) {
   if (hidden || deleting) return null;
 
   return (
-    <motion.article
-      className="p-4 sm:p-6"
-      variants={staggerItemVariants}
-    >
+    <motion.article className="p-4 sm:p-5" variants={staggerItemVariants}>
       {/* User header */}
       {post.user && (
         <div className="flex items-center justify-between mb-3">
@@ -372,103 +367,114 @@ export function PostCard({ post }: { post: Post }) {
       )}
 
       {/* Media */}
-      {post.media_urls.length > 0 && (
-        <div className="relative rounded-lg overflow-hidden mb-3 bg-muted">
-          {post.media_types[activeMedia] === 'video' ? (
-            <video
-              src={post.media_urls[activeMedia]}
-              controls
-              className="w-full max-h-[500px] object-contain"
-              preload="metadata"
-            />
-          ) : (
-            <img
-              src={post.media_urls[activeMedia]}
-              alt=""
-              className="w-full max-h-[500px] object-contain"
-              loading="lazy"
-            />
-          )}
-          {/* Media indicators */}
-          {post.media_urls.length > 1 && (
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-              {post.media_urls.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveMedia(i)}
-                  className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                    i === activeMedia ? 'bg-white' : 'bg-white/50'
-                  }`}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {post.media_urls.length > 0 && (() => {
+        const raw = post.media_types[activeMedia] ?? 'image';
+        const { isVideo, filter, zoom } = parseMediaType(raw);
+        const mediaStyle: React.CSSProperties = {
+          filter: filter !== 'none' ? filter : undefined,
+          transform: zoom !== 1 ? `scale(${zoom})` : undefined,
+          transition: 'filter 0.2s, transform 0.2s',
+        };
+        return (
+          <div className="relative rounded-xl overflow-hidden mb-3 bg-muted">
+            {isVideo ? (
+              <video
+                src={post.media_urls[activeMedia]}
+                controls
+                className="w-full max-h-[500px] object-contain"
+                preload="metadata"
+                style={mediaStyle}
+              />
+            ) : (
+              <img
+                src={post.media_urls[activeMedia]}
+                alt=""
+                className="w-full max-h-[500px] object-contain"
+                loading="lazy"
+                style={mediaStyle}
+              />
+            )}
+            {post.media_urls.length > 1 && (
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+                {post.media_urls.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveMedia(i)}
+                    className={`w-1.5 h-1.5 rounded-full transition-colors ${i === activeMedia ? 'bg-white' : 'bg-white/50'}`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Caption */}
-      {post.caption && (
-        <p className="text-sm leading-relaxed mb-3">{post.caption}</p>
-      )}
+      {post.caption && <p className="text-sm leading-relaxed mb-3">{post.caption}</p>}
 
-      {/* Actions */}
-      <div className="flex items-center gap-4 text-muted-foreground">
+      {/* Actions — clean flat style, no glass */}
+      <div className="flex items-center gap-5 text-muted-foreground">
         <motion.button
           className="flex items-center gap-1.5 text-xs hover:text-foreground transition-colors"
           onClick={handleLike}
-          whileTap={{ scale: 0.9 }}
+          whileTap={{ scale: 0.88 }}
         >
           <motion.div animate={liked ? heartBeat : {}}>
-            <IconHeart size={16} filled={liked} className={liked ? 'text-foreground' : ''} />
+            <IconHeart size={17} filled={liked} className={liked ? 'text-foreground' : ''} />
           </motion.div>
-          <span>{likesCount > 0 ? likesCount : ''}</span>
+          {likesCount > 0 && <span>{likesCount}</span>}
         </motion.button>
 
         <button className="flex items-center gap-1.5 text-xs hover:text-foreground transition-colors">
-          <IconMessageCircle size={16} />
-          <span>{post.comments_count > 0 ? post.comments_count : ''}</span>
+          <IconMessageCircle size={17} />
+          {post.comments_count > 0 && <span>{post.comments_count}</span>}
         </button>
 
         <button
           className="flex items-center gap-1.5 text-xs hover:text-foreground transition-colors"
           onClick={handleShare}
         >
-          <IconShare size={16} />
+          <IconShare size={17} />
         </button>
 
+        {/* Three-dot menu */}
         <div className="relative ml-auto">
           <button
             className="p-1 hover:text-foreground transition-colors"
             onClick={() => setShowMenu(!showMenu)}
           >
-            <IconMoreHorizontal size={16} />
+            <IconMoreHorizontal size={17} />
           </button>
           <AnimatePresence>
             {showMenu && (
               <>
-                <div className="fixed inset-0 z-5" onClick={() => setShowMenu(false)} />
+                <div className="fixed inset-0 z-[9]" onClick={() => setShowMenu(false)} />
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="absolute right-0 top-8 w-40 bg-background shadow-lg rounded-lg z-10 py-1 overflow-hidden border border-muted"
+                  initial={{ opacity: 0, scale: 0.92, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.92, y: -4 }}
+                  transition={{ duration: 0.12 }}
+                  className="absolute right-0 top-8 w-44 bg-background rounded-xl z-10 py-1.5 overflow-hidden border border-border shadow-lg"
                 >
                   <CopyLinkButton url={postUrl} onDone={() => setShowMenu(false)} />
                   <button
-                    className="flex items-center gap-2 w-full px-3 py-2 text-xs hover:bg-muted text-left"
+                    className="flex items-center gap-2.5 w-full px-4 py-2.5 text-xs hover:bg-muted text-left transition-colors"
                     onClick={handleHide}
                   >
                     <IconEyeOff size={14} />
-                    Hide
+                    Hide post
                   </button>
                   {isOwner && (
-                    <button
-                      className="flex items-center gap-2 w-full px-3 py-2 text-xs hover:bg-muted text-left text-destructive"
-                      onClick={handleDelete}
-                    >
-                      <IconTrash size={14} />
-                      Delete
-                    </button>
+                    <>
+                      <div className="my-1 border-t border-border" />
+                      <button
+                        className="flex items-center gap-2.5 w-full px-4 py-2.5 text-xs hover:bg-muted text-left text-destructive transition-colors"
+                        onClick={handleDelete}
+                      >
+                        <IconTrash size={14} />
+                        Delete post
+                      </button>
+                    </>
                   )}
                 </motion.div>
               </>
