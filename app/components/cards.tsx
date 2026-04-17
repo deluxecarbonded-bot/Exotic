@@ -132,7 +132,7 @@ export function AnswerCard({ answer }: { answer: Answer }) {
           whileTap={{ scale: 0.9 }}
         >
           <motion.div animate={liked ? heartBeat : {}}>
-            <IconHeart size={16} filled={liked} className={liked ? 'text-foreground' : ''} />
+            <IconHeart size={16} filled={liked} className={liked ? 'text-red-500' : ''} />
           </motion.div>
           <span>{likesCount > 0 ? likesCount : ''}</span>
         </motion.button>
@@ -445,7 +445,7 @@ export function PostCard({ post }: { post: Post }) {
             style={{ background: 'none', border: 'none', boxShadow: 'none', backdropFilter: 'none' }}
           >
             <motion.div animate={liked ? heartBeat : {}}>
-              <IconHeart size={17} filled={liked} className={liked ? 'text-foreground' : ''} />
+              <IconHeart size={17} filled={liked} className={liked ? 'text-red-500' : ''} />
             </motion.div>
             {likesCount > 0 && <span>{likesCount}</span>}
           </motion.button>
