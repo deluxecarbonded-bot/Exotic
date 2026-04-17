@@ -18,9 +18,15 @@ export default [
 
   route("api/resolve-username", "routes/api.resolve-username.ts"),
   route("api/track-session", "routes/api.track-session.ts"),
+  route("api/send-reset-code", "routes/api.send-reset-code.ts"),
+  route("api/verify-reset-code", "routes/api.verify-reset-code.ts"),
+  route("api/reset-password", "routes/api.reset-password.ts"),
 
   // Public routes
   route("ask/:username", "routes/ask.$username.tsx"),
   route("login", "routes/login.tsx"),
   route("register", "routes/register.tsx"),
+  route("forgot-password", "routes/forgot-password.tsx"),
+  route("verify-reset-code", "routes/verify-reset-code.tsx"),
+  route("reset-password", "routes/reset-password.tsx"),
 ] satisfies RouteConfig;

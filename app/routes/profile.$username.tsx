@@ -371,6 +371,12 @@ export default function ProfilePage({ params }: Route.ComponentProps) {
     loadProfile();
   }, [username, authUser?.id]);
 
+  // Sync own profile instantly when authUser changes (settings updates apply immediately)
+  useEffect(() => {
+    if (!isOwnProfile || !authUser || !profileUser) return;
+    setProfileUser((prev) => prev ? { ...prev, ...authUser } : prev);
+  }, [authUser?.display_name, authUser?.bio, authUser?.avatar_url, authUser?.username, authUser?.is_private, isOwnProfile]);
+
   // Subscribe to profile realtime updates (profile data + answers + follow status)
   useEffect(() => {
     if (!profileUser?.id) return;
@@ -400,6 +406,7 @@ export default function ProfilePage({ params }: Route.ComponentProps) {
         async () => {
           const f = await fetchFollowers(profileUser.id);
           setFollowers(f);
+          setProfileUser((prev) => prev ? { ...prev, followers_count: f.length } : prev);
           checkFollowStatus(profileUser.id);
         }
       )
@@ -408,7 +415,7 @@ export default function ProfilePage({ params }: Route.ComponentProps) {
         async () => {
           const f = await fetchFollowers(profileUser.id);
           setFollowers(f);
-          // This fires when someone's request is accepted — recheck our status
+          setProfileUser((prev) => prev ? { ...prev, followers_count: f.length } : prev);
           checkFollowStatus(profileUser.id);
         }
       )
@@ -417,6 +424,7 @@ export default function ProfilePage({ params }: Route.ComponentProps) {
         async () => {
           const f = await fetchFollowers(profileUser.id);
           setFollowers(f);
+          setProfileUser((prev) => prev ? { ...prev, followers_count: f.length } : prev);
           checkFollowStatus(profileUser.id);
         }
       )
@@ -425,6 +433,7 @@ export default function ProfilePage({ params }: Route.ComponentProps) {
         async () => {
           const fg = await fetchFollowingUsers(profileUser.id);
           setFollowingUsers(fg);
+          setProfileUser((prev) => prev ? { ...prev, following_count: fg.length } : prev);
         }
       )
       .on('postgres_changes',
@@ -432,6 +441,7 @@ export default function ProfilePage({ params }: Route.ComponentProps) {
         async () => {
           const fg = await fetchFollowingUsers(profileUser.id);
           setFollowingUsers(fg);
+          setProfileUser((prev) => prev ? { ...prev, following_count: fg.length } : prev);
         }
       )
       .subscribe();

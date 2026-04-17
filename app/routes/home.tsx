@@ -102,7 +102,6 @@ export default function HomePage() {
   const { following, fetchFollowing } = useFollowStore();
   const liveCount = useLiveStore((s) => s.liveCount);
   const [activeTab, setActiveTab] = useState("for-you");
-  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -124,22 +123,6 @@ export default function HomePage() {
     () => posts.filter((p) => following.has(p.user_id)),
     [posts, following]
   );
-
-  const handleRefresh = async () => {
-    if (!user?.id) return;
-    setRefreshing(true);
-    const followedIds = Array.from(following);
-    const idsWithSelf = followedIds.length > 0 ? [...followedIds, user.id] : undefined;
-    await Promise.all([
-      fetchFeed(idsWithSelf),
-      fetchPosts(idsWithSelf),
-    ]);
-    await Promise.all([
-      checkLikes(user.id),
-      checkPostLikes(user.id),
-    ]);
-    setRefreshing(false);
-  };
 
   const loading = isLoading || postsLoading;
 
@@ -184,23 +167,6 @@ export default function HomePage() {
               </TabsList>
             </div>
 
-            <AnimatePresence mode="wait">
-              {refreshing && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 40, opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="flex items-center justify-center"
-                >
-                  <motion.div
-                    className="w-5 h-5 border-2 border-foreground border-t-transparent rounded-full"
-                    animate={{ rotate: 360 }}
-                    transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-
             <TabsContent value="for-you">
               <AnimatePresence mode="wait">
                 {loading ? (
@@ -230,18 +196,6 @@ export default function HomePage() {
             </TabsContent>
           </Tabs>
         </div>
-
-        {!loading && user && (
-          <div className="flex justify-center py-4">
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={handleRefresh}
-              className="text-sm px-5 py-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {refreshing ? "Refreshing..." : "Refresh feed"}
-            </motion.button>
-          </div>
-        )}
       </div>
 
     </AppShell>

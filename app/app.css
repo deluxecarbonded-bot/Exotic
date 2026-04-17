@@ -463,41 +463,11 @@ html.liquid-glass [data-slot="input"],
 html.liquid-glass textarea,
 html.liquid-glass [data-slot="textarea"],
 html.liquid-glass select {
-  /* Override all var-based bg → transparent */
-  --input:      transparent;
-  --muted:      transparent;
-  --background: transparent;
-  backdrop-filter:         var(--glass-blur-sm);
-  -webkit-backdrop-filter: var(--glass-blur-sm);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   background-color: transparent !important;
   background-image: none !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.55),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.05),
-    0 1px 4px rgba(0, 0, 0, 0.06) !important;
-  color: #1a1a1a !important;
-}
-
-html.liquid-glass.dark input:not([type="checkbox"]):not([type="radio"]),
-html.liquid-glass.dark [data-slot="input"],
-html.liquid-glass.dark textarea,
-html.liquid-glass.dark [data-slot="textarea"],
-html.liquid-glass.dark select {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.30),
-    0 1px 4px rgba(0, 0, 0, 0.20) !important;
-  color: #f0f0f0 !important;
-}
-
-html.liquid-glass input::placeholder,
-html.liquid-glass textarea::placeholder {
-  color: rgba(26, 26, 26, 0.45) !important;
-}
-
-html.liquid-glass.dark input::placeholder,
-html.liquid-glass.dark textarea::placeholder {
-  color: rgba(240, 240, 240, 0.40) !important;
+  box-shadow: none !important;
 }
 
 /* ──────────────────────────────────────────────────

@@ -6,7 +6,6 @@ import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
 import { ExoticLogo, ExoticWordmark } from "~/components/logo";
-import { IconGlobe } from "~/components/icons";
 import { useAuthStore } from "~/stores/auth-store";
 import { supabase } from "~/lib/supabase";
 
@@ -92,18 +91,20 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Label className="mb-1.5">Username</Label>
-              <Input
-                type="text"
-                value={username}
-                onChange={(e) => {
-                  setUsername(e.target.value);
-                  if (errors.username) setErrors((p) => ({ ...p, username: undefined }));
-                }}
-                placeholder="yourhandle"
-                autoComplete="username"
-                autoCapitalize="none"
-                aria-invalid={!!errors.username}
-              />
+              <div className="flex items-center">
+                <span className="text-sm text-muted-foreground mr-1">@</span>
+                <Input
+                  value={username}
+                  onChange={(e) => {
+                    setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ""));
+                    if (errors.username) setErrors((p) => ({ ...p, username: undefined }));
+                  }}
+                  placeholder="username"
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  aria-invalid={!!errors.username}
+                />
+              </div>
               {errors.username && (
                 <motion.p
                   initial={{ opacity: 0, y: -4 }}
@@ -157,38 +158,6 @@ export default function Login() {
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
-
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full h-px bg-muted" />
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="bg-background px-3 text-muted-foreground">or</span>
-            </div>
-          </div>
-
-          {/* Social Login */}
-          <div className="space-y-3">
-            <Button
-              variant="outline"
-              size="xl"
-              className="w-full"
-              type="button"
-            >
-              <IconGlobe size={16} />
-              Continue with Google
-            </Button>
-            <Button
-              variant="outline"
-              size="xl"
-              className="w-full"
-              type="button"
-            >
-              <IconGlobe size={16} />
-              Continue with Apple
-            </Button>
-          </div>
 
           {/* Sign up link */}
           <p className="text-center text-sm text-muted-foreground">

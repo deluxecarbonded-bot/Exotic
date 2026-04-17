@@ -130,109 +130,113 @@ export default function Search() {
   return (
     <AppShell>
       <div className="max-w-2xl mx-auto">
-        {/* Search Input */}
-        <div className="sticky top-16 z-10 px-4 pt-4 pb-2">
-          <form onSubmit={handleSearchSubmit} className="relative">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-              <IconSearch size={16} />
-            </div>
-            <Input
-              ref={inputRef}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search people, questions, answers..."
-              className="pl-9 pr-9 h-9 bg-transparent"
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <IconX size={14} />
-              </button>
-            )}
-          </form>
-        </div>
-
-        <AnimatePresence mode="wait">
-          {!hasQuery ? (
-            /* Recent Searches */
-            <motion.div
-              key="recent"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="px-4 pt-4"
-            >
-              {recent.length > 0 && (
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-sm font-semibold">Recent searches</h2>
-                    <Button
-                      variant="ghost"
-                      size="default"
-                      onClick={clear}
-                      className="text-xs text-muted-foreground"
-                    >
-                      Clear all
-                    </Button>
-                  </div>
-                  <motion.div
-                    variants={staggerContainer}
-                    initial="initial"
-                    animate="animate"
-                    className="space-y-1"
-                  >
-                    {recent.map((term) => (
-                      <motion.button
-                        key={term}
-                        variants={staggerItemVariants}
-                        onClick={() => handleRecentClick(term)}
-                        className="flex items-center gap-3 w-full px-3 py-2.5 text-sm hover:bg-muted/50 transition-colors text-left"
-                      >
-                        <IconSearch size={14} className="text-muted-foreground flex-shrink-0" />
-                        <span className="truncate">{term}</span>
-                      </motion.button>
-                    ))}
-                  </motion.div>
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as SearchTab)}
+        >
+          {/* Sticky header: search input + tabs when searching */}
+          <div className="sticky top-14 lg:top-0 z-10">
+            <div className="px-4 pt-4 pb-2">
+              <form onSubmit={handleSearchSubmit} className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  <IconSearch size={16} />
                 </div>
-              )}
-
-              {recent.length === 0 && (
-                <EmptyState
-                  icon={IconSearch}
-                  title="Search Exotic"
-                  description="Find people, questions, and answers across the platform."
+                <Input
+                  ref={inputRef}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search people, questions, answers..."
+                  className="pl-9 pr-9 h-9 bg-transparent"
                 />
-              )}
-            </motion.div>
-          ) : (
-            /* Search Results */
-            <motion.div
-              key="results"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <Tabs
-                value={activeTab}
-                onValueChange={(v) => setActiveTab(v as SearchTab)}
-              >
-                <div className="px-4">
-                  <TabsList className="w-full !h-11">
-                    <TabsTrigger value="people" className="flex-1 text-sm">
-                      People {userResults.length > 0 && `(${userResults.length})`}
-                    </TabsTrigger>
-                    <TabsTrigger value="questions" className="flex-1 text-sm">
-                      Questions
-                    </TabsTrigger>
-                    <TabsTrigger value="answers" className="flex-1 text-sm">
-                      Answers {answerResults.length > 0 && `(${answerResults.length})`}
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery("")}
+                    className="ghost-btn absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <IconX size={14} />
+                  </button>
+                )}
+              </form>
+            </div>
 
+            {hasQuery && (
+              <div className="px-4 pb-2">
+                <TabsList className="w-full !h-11 bg-transparent">
+                  <TabsTrigger value="people" className="flex-1 text-sm">
+                    People {userResults.length > 0 && `(${userResults.length})`}
+                  </TabsTrigger>
+                  <TabsTrigger value="questions" className="flex-1 text-sm">
+                    Questions
+                  </TabsTrigger>
+                  <TabsTrigger value="answers" className="flex-1 text-sm">
+                    Answers {answerResults.length > 0 && `(${answerResults.length})`}
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+            )}
+          </div>
+
+          <AnimatePresence mode="wait">
+            {!hasQuery ? (
+              /* Recent Searches */
+              <motion.div
+                key="recent"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="px-4 pt-4"
+              >
+                {recent.length > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h2 className="text-sm font-semibold">Recent searches</h2>
+                      <Button
+                        variant="ghost"
+                        size="default"
+                        onClick={clear}
+                        className="text-xs text-muted-foreground"
+                      >
+                        Clear all
+                      </Button>
+                    </div>
+                    <motion.div
+                      variants={staggerContainer}
+                      initial="initial"
+                      animate="animate"
+                      className="space-y-1"
+                    >
+                      {recent.map((term) => (
+                        <motion.button
+                          key={term}
+                          variants={staggerItemVariants}
+                          onClick={() => handleRecentClick(term)}
+                          className="flex items-center gap-3 w-full px-3 py-2.5 text-sm hover:bg-muted/50 transition-colors text-left"
+                        >
+                          <IconSearch size={14} className="text-muted-foreground flex-shrink-0" />
+                          <span className="truncate">{term}</span>
+                        </motion.button>
+                      ))}
+                    </motion.div>
+                  </div>
+                )}
+
+                {recent.length === 0 && (
+                  <EmptyState
+                    icon={IconSearch}
+                    title="Search Exotic"
+                    description="Find people, questions, and answers across the platform."
+                  />
+                )}
+              </motion.div>
+            ) : (
+              /* Search Results */
+              <motion.div
+                key="results"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
                 {isSearching ? (
                   <div className="flex items-center justify-center py-16">
                     <motion.div
@@ -293,10 +297,10 @@ export default function Search() {
                     </TabsContent>
                   </>
                 )}
-              </Tabs>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </Tabs>
       </div>
     </AppShell>
   );
