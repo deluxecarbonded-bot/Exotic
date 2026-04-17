@@ -1,7 +1,7 @@
 import type { Route } from "./+types/register";
 import { useState, useEffect, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
@@ -39,6 +39,7 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [registered, setRegistered] = useState(false);
 
   const strength = getPasswordStrength(password);
 
@@ -78,7 +79,7 @@ export default function Register() {
     clearError();
     if (!validate()) return;
     const success = await register(username, displayName, email, password);
-    if (success) navigate("/");
+    if (success) setRegistered(true);
   };
 
   const clearFieldError = (field: string) => {
@@ -95,28 +96,74 @@ export default function Register() {
     <div className="min-h-screen bg-background text-foreground">
       <div className="min-h-screen flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-sm space-y-8">
-          {/* Logo */}
-          <div className="flex flex-col items-center gap-3">
-            <ExoticLogo size={48} />
-            <ExoticWordmark />
-            <p className="text-sm text-muted-foreground">
-              Create your account
-            </p>
-          </div>
 
-          {/* Auth Error */}
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm text-center"
-            >
-              {error}
-            </motion.div>
-          )}
+          <AnimatePresence mode="wait">
+            {registered ? (
+              <motion.div
+                key="check-email"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center space-y-6"
+              >
+                <div className="flex flex-col items-center gap-3">
+                  <ExoticLogo size={48} />
+                  <ExoticWordmark />
+                </div>
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                    <motion.svg
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.1, type: "spring", stiffness: 300 }}
+                      width={28} height={28} viewBox="0 0 24 24"
+                      fill="none" stroke="currentColor" strokeWidth={2}
+                      strokeLinecap="round" strokeLinejoin="round"
+                    >
+                      <rect width="20" height="16" x="2" y="4" rx="2" />
+                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                    </motion.svg>
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold">Check your email</h2>
+                    <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                      We sent a confirmation link to{" "}
+                      <span className="font-medium text-foreground">{email}</span>.
+                      Click it to activate your account.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  asChild
+                  className="w-full bg-foreground text-background hover:opacity-90"
+                  size="xl"
+                >
+                  <Link to="/login">Go to Sign In</Link>
+                </Button>
+              </motion.div>
+            ) : (
+              <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+                {/* Logo */}
+                <div className="flex flex-col items-center gap-3">
+                  <ExoticLogo size={48} />
+                  <ExoticWordmark />
+                  <p className="text-sm text-muted-foreground">
+                    Create your account
+                  </p>
+                </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Auth Error */}
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm text-center"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Label className="mb-1.5">Display Name</Label>
               <Input
@@ -307,6 +354,10 @@ export default function Register() {
               Sign in
             </Link>
           </p>
+        </motion.div>
+          )}
+          </AnimatePresence>
+
         </div>
       </div>
     </div>

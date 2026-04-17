@@ -102,7 +102,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
       const { data, error } = await supabase.auth.signInWithPassword({ email: resolved.email, password });
       if (error) {
-        set({ isLoading: false, error: error.message });
+        const msg = error.message.toLowerCase().includes('email not confirmed')
+          ? 'Please verify your email before signing in. Check your inbox.'
+          : error.message;
+        set({ isLoading: false, error: msg });
         return false;
       }
       if (data.user) {
@@ -122,24 +125,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   register: async (username, displayName, email, password) => {
     set({ isLoading: true, error: null });
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { username, display_name: displayName },
-      },
-    });
-    if (error) {
-      set({ isLoading: false, error: error.message });
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { username, display_name: displayName },
+        },
+      });
+      if (error) {
+        set({ isLoading: false, error: error.message });
+        return false;
+      }
+      // Sign out any auto-created session — user must verify email first
+      await supabase.auth.signOut();
+      set({ user: null, isAuthenticated: false, isLoading: false });
+      return !!data.user;
+    } catch {
+      set({ isLoading: false, error: 'Something went wrong. Please try again.' });
       return false;
     }
-    if (data.user) {
-      // Wait a moment for the trigger to create the profile
-      await new Promise((r) => setTimeout(r, 500));
-      const profile = await fetchProfile(data.user.id);
-      set({ user: profile, isAuthenticated: !!profile, isLoading: false });
-    }
-    return true;
   },
 
   logout: async () => {
