@@ -2,9 +2,13 @@ import { motion } from 'framer-motion';
 
 export function ExoticLogo({ size = 32, className = '' }: { size?: number; className?: string }) {
   return (
-    <motion.div
-      className={`logo-bubble inline-flex items-center justify-center rounded-2xl flex-shrink-0 ${className}`}
-      style={{ width: size, height: size }}
+    <motion.svg
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      fill="none"
+      className={`logo-svg ${className}`}
+      style={{ overflow: 'visible' }}
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{
         scale: 1,
@@ -19,27 +23,31 @@ export function ExoticLogo({ size = 32, className = '' }: { size?: number; class
           repeat: Infinity,
           ease: [0.45, 0, 0.55, 1],
           repeatType: 'loop',
-          delay: 0.5,
+          delay: 0.6,
         },
       }}
     >
-      {/* Question mark only — container div provides the bubble shape */}
-      <svg
-        width={size * 0.52}
-        height={size * 0.52}
-        viewBox="0 0 24 24"
-        fill="none"
+      {/* Bubble body — rounded rect + tail */}
+      <path
+        className="logo-bubble-body"
+        d="M6 2H34C36.209 2 38 3.791 38 6V27C38 29.209 36.209 31 34 31H16L8 38V31H6C3.791 31 2 29.209 2 27V6C2 3.791 3.791 2 6 2Z"
+      />
+
+      {/* Top-edge glass highlight (only rendered in glass mode) */}
+      <path
+        className="logo-bubble-highlight"
+        d="M7.5 3.5H32.5C34.709 3.5 36 4.5 36.5 6V9C33 7 20 6.5 7 7V6C7 4.619 7.5 3.5 7.5 3.5Z"
+      />
+
+      {/* Question mark */}
+      <path
         className="logo-bubble-icon"
-      >
-        <path
-          d="M9.5 8.5C9.5 6.567 10.9 5 12.5 5C14.1 5 15.5 6.567 15.5 8C15.5 9.433 14.1 10.2 13 11C12.4 11.4 12 12 12 12.5V13.5"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-        />
-        <circle cx="12" cy="17" r="1.1" fill="currentColor" />
-      </svg>
-    </motion.div>
+        d="M15.5 16C15.5 12.5 17.8 10 20.5 10C23.2 10 25.5 12.5 25.5 15.2C25.5 17.8 23 19 21.5 20.2C20.7 20.8 20.5 21.6 20.5 22.5V23.5"
+        strokeWidth="2.3"
+        strokeLinecap="round"
+      />
+      <circle className="logo-bubble-icon-dot" cx="20.5" cy="27.5" r="1.6" />
+    </motion.svg>
   );
 }
 
