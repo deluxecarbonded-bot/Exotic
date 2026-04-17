@@ -435,13 +435,14 @@ export function PostCard({ post }: { post: Post }) {
         {/* Caption */}
         {post.caption && <p className="text-sm leading-relaxed mb-3">{post.caption}</p>}
 
-        {/* Actions — clean flat style, glass-exempt */}
-        <div className="flex items-center gap-5 text-muted-foreground">
+        {/* Actions — icon only, no background ever */}
+        <div className="flex items-center gap-5">
           {/* Like */}
           <motion.button
-            className="ghost-btn flex items-center gap-1.5 text-xs hover:text-foreground transition-colors"
+            className="ghost-btn flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors p-0"
             onClick={handleLike}
             whileTap={{ scale: 0.88 }}
+            style={{ background: 'none', border: 'none', boxShadow: 'none', backdropFilter: 'none' }}
           >
             <motion.div animate={liked ? heartBeat : {}}>
               <IconHeart size={17} filled={liked} className={liked ? 'text-foreground' : ''} />
@@ -451,8 +452,9 @@ export function PostCard({ post }: { post: Post }) {
 
           {/* Comments */}
           <button
-            className="ghost-btn flex items-center gap-1.5 text-xs hover:text-foreground transition-colors"
+            className="ghost-btn flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors p-0"
             onClick={() => setShowComments(true)}
+            style={{ background: 'none', border: 'none', boxShadow: 'none', backdropFilter: 'none' }}
           >
             <IconMessageCircle size={17} />
             {commentsCount > 0 && <span>{commentsCount}</span>}
@@ -460,8 +462,9 @@ export function PostCard({ post }: { post: Post }) {
 
           {/* Share */}
           <button
-            className="ghost-btn flex items-center gap-1.5 text-xs hover:text-foreground transition-colors"
+            className="ghost-btn flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors p-0"
             onClick={() => setShowShare(true)}
+            style={{ background: 'none', border: 'none', boxShadow: 'none', backdropFilter: 'none' }}
           >
             <IconShare size={17} />
           </button>
@@ -469,8 +472,9 @@ export function PostCard({ post }: { post: Post }) {
           {/* Three-dot menu */}
           <div className="relative ml-auto">
             <button
-              className="ghost-btn p-1 hover:text-foreground transition-colors"
+              className="ghost-btn text-muted-foreground hover:text-foreground transition-colors p-0"
               onClick={() => setShowMenu(!showMenu)}
+              style={{ background: 'none', border: 'none', boxShadow: 'none', backdropFilter: 'none' }}
             >
               <IconMoreHorizontal size={17} />
             </button>
