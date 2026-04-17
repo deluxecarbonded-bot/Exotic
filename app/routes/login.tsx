@@ -1,6 +1,6 @@
 import type { Route } from "./+types/login";
 import { useState, useEffect, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
@@ -19,10 +19,12 @@ export function meta({}: Route.MetaArgs) {
 export default function Login() {
   const { login, isLoading, error, clearError, isAuthenticated, user, updateProfile, logout } = useAuthStore();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
   const [showReactivate, setShowReactivate] = useState(false);
+  const urlError = searchParams.get("error");
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -77,13 +79,13 @@ export default function Login() {
           </div>
 
           {/* Auth Error */}
-          {error && (
+          {(error || urlError) && (
             <motion.div
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm text-center"
             >
-              {error}
+              {error || urlError}
             </motion.div>
           )}
 

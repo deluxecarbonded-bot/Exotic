@@ -23,6 +23,8 @@ export default [
   route("api/reset-password", "routes/api.reset-password.ts"),
   route("api/auth-email-hook", "routes/api.auth-email-hook.ts"),
 
+  route("auth/confirm", "routes/auth-confirm.tsx"),
+
   // Public routes
   route("ask/:username", "routes/ask.$username.tsx"),
   route("login", "routes/login.tsx"),
