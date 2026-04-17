@@ -22,6 +22,7 @@ export default [
   route("api/verify-reset-code", "routes/api.verify-reset-code.ts"),
   route("api/reset-password", "routes/api.reset-password.ts"),
   route("api/auth-email-hook", "routes/api.auth-email-hook.ts"),
+  route("api/delete-account", "routes/api.delete-account.ts"),
 
   route("auth/confirm", "routes/auth-confirm.tsx"),
 

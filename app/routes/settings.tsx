@@ -393,6 +393,12 @@ export default function Settings() {
     await supabase.from("notifications").delete().eq("user_id", user.id);
     await supabase.from("notifications").delete().eq("actor_id", user.id);
     await supabase.from("profiles").delete().eq("id", user.id);
+    // Delete from Supabase Auth (requires service role — done server-side)
+    await fetch("/api/delete-account", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: user.id }),
+    });
     await supabase.auth.signOut();
     navigate("/login");
   };
