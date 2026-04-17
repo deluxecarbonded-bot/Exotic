@@ -51,6 +51,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
                 }
                 if (theme === 'dark') document.documentElement.classList.add('dark');
+                if (localStorage.getItem('exotic-liquid-glass') === '1') {
+                  document.documentElement.classList.add('liquid-glass');
+                }
               } catch(e) {}
             })();
           `

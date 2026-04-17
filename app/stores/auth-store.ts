@@ -26,6 +26,32 @@ async function fetchProfile(userId: string): Promise<User | null> {
   return data as User;
 }
 
+function trackSession(userId: string) {
+  const key = `session_tracked_${userId}`;
+  if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(key)) return;
+
+  const doTrack = (lat?: number, lon?: number) => {
+    fetch('/api/track-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, latitude: lat, longitude: lon }),
+    }).then(() => {
+      if (typeof sessionStorage !== 'undefined') sessionStorage.setItem(key, '1');
+    }).catch(() => {});
+  };
+
+  // Request real GPS for 100% accurate location
+  if (typeof navigator !== 'undefined' && navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => doTrack(pos.coords.latitude, pos.coords.longitude),
+      () => doTrack(), // permission denied — fall back to IP geo
+      { timeout: 6000, maximumAge: 300000 }
+    );
+  } else {
+    doTrack();
+  }
+}
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
@@ -42,6 +68,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (session?.user) {
         const profile = await fetchProfile(session.user.id);
         set({ user: profile, isAuthenticated: !!profile, isLoading: false });
+        if (profile) trackSession(profile.id);
       } else {
         set({ isLoading: false });
       }
@@ -80,6 +107,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (data.user) {
       const profile = await fetchProfile(data.user.id);
       set({ user: profile, isAuthenticated: !!profile, isLoading: false });
+      // Track session (IP, device, location) — fire and forget
+      if (profile) trackSession(profile.id);
     }
     return true;
   },

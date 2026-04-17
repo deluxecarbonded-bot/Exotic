@@ -8,6 +8,7 @@ import { usePostStore } from '~/stores/post-store';
 import { useFollowStore } from '~/stores/follow-store';
 import { useAuthStore } from '~/stores/auth-store';
 import { UserAvatar, AnonAvatar } from '~/components/user-avatar';
+import { VerifiedBadge, OwnerBadge } from '~/components/badges';
 import type { Answer, Question, User, Post } from '~/types';
 
 function CopyLinkButton({ url, onDone }: { url: string; onDone: () => void }) {
@@ -81,7 +82,7 @@ export function AnswerCard({ answer }: { answer: Answer }) {
 
   return (
     <motion.article
-      className="bg-background p-4 sm:p-6"
+      className="p-4 sm:p-6"
       variants={staggerItemVariants}
     >
       {/* Question */}
@@ -111,6 +112,8 @@ export function AnswerCard({ answer }: { answer: Answer }) {
             <UserAvatar user={answer.user} size="sm" />
             <div>
               <span className="text-sm font-semibold">{answer.user.display_name}</span>
+              {answer.user.is_owner && <OwnerBadge />}
+              {answer.user.is_verified && <VerifiedBadge />}
               <span className="text-xs text-muted-foreground ml-2">@{answer.user.username}</span>
             </div>
           </Link>
@@ -190,7 +193,7 @@ export function AnswerCard({ answer }: { answer: Answer }) {
 export function QuestionCard({ question, onAnswer, onDelete }: { question: Question; onAnswer?: (id: string) => void; onDelete?: (id: string) => void }) {
   return (
     <motion.article
-      className="bg-background p-4 sm:p-6"
+      className="p-4 sm:p-6"
       variants={staggerItemVariants}
     >
       <div className="flex items-start justify-between mb-2">
@@ -261,7 +264,11 @@ export function UserCard({ user, onFollow }: { user: User; onFollow?: (id: strin
         <UserAvatar user={user} size="md" />
       </Link>
       <Link to={`/profile/${user.username}`} className="flex-1 min-w-0">
-        <p className="text-sm font-semibold truncate">{user.display_name}</p>
+        <p className="text-sm font-semibold truncate flex items-center gap-1 flex-wrap">
+          {user.display_name}
+          {user.is_owner && <OwnerBadge />}
+          {user.is_verified && <VerifiedBadge />}
+        </p>
         <p className="text-xs text-muted-foreground truncate">@{user.username}</p>
         {user.bio && <p className="text-xs text-muted-foreground mt-0.5 truncate">{user.bio}</p>}
       </Link>
@@ -345,7 +352,7 @@ export function PostCard({ post }: { post: Post }) {
 
   return (
     <motion.article
-      className="bg-background p-4 sm:p-6"
+      className="p-4 sm:p-6"
       variants={staggerItemVariants}
     >
       {/* User header */}
@@ -355,6 +362,8 @@ export function PostCard({ post }: { post: Post }) {
             <UserAvatar user={post.user} size="sm" />
             <div>
               <span className="text-sm font-semibold">{post.user.display_name}</span>
+              {post.user.is_owner && <OwnerBadge />}
+              {post.user.is_verified && <VerifiedBadge />}
               <span className="text-xs text-muted-foreground ml-2">@{post.user.username}</span>
             </div>
           </Link>

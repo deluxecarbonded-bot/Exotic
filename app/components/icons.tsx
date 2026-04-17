@@ -438,6 +438,17 @@ export function IconLayers({ size = 24, strokeWidth = 2, ...props }: IconProps) 
   );
 }
 
+export function IconCrown({ size = 24, strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <motion.svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M2 19h20M4 19l2-9 5 5 3-8 3 8 5-5 2 9" />
+      <circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="4.5" cy="10.5" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="19.5" cy="10.5" r="1.5" fill="currentColor" stroke="none" />
+    </motion.svg>
+  );
+}
+
 export function IconPin({ size = 24, strokeWidth = 2, ...props }: IconProps) {
   return (
     <motion.svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" {...props}>

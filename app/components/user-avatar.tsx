@@ -57,14 +57,14 @@ export function UserAvatar({
       <img
         src={url}
         alt={displayName}
-        className={`${sizeClasses[size]} rounded-full object-cover flex-shrink-0 ${className}`}
+        className={`avatar-img ${sizeClasses[size]} rounded-full object-cover flex-shrink-0 ${className}`}
       />
     );
   }
 
   return (
     <div
-      className={`${sizeClasses[size]} rounded-full flex items-center justify-center font-bold text-white flex-shrink-0 ${className}`}
+      className={`user-avatar ${sizeClasses[size]} rounded-full flex items-center justify-center font-bold text-white flex-shrink-0 ${className}`}
       style={{ backgroundColor: getAvatarColor(displayName) }}
     >
       {getInitials(displayName)}
@@ -82,7 +82,7 @@ export function AnonAvatar({
 }) {
   return (
     <div
-      className={`${sizeClasses[size]} rounded-full bg-muted flex items-center justify-center flex-shrink-0 ${className}`}
+      className={`anon-avatar ${sizeClasses[size]} rounded-full bg-muted flex items-center justify-center flex-shrink-0 ${className}`}
     >
       <span className="font-bold text-muted-foreground">?</span>
     </div>

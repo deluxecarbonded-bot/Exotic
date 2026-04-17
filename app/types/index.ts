@@ -5,6 +5,7 @@ export interface User {
   bio: string;
   avatar_url: string | null;
   is_verified: boolean;
+  is_owner: boolean;
   is_private: boolean;
   followers_count: number;
   following_count: number;

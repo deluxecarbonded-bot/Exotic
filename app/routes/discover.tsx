@@ -18,6 +18,7 @@ import { usePostStore } from "~/stores/post-store";
 import { useAuthStore } from "~/stores/auth-store";
 import { useLiveStore } from "~/stores/live-store";
 import { supabase } from "~/lib/supabase";
+import { VerifiedBadge, OwnerBadge } from "~/components/badges";
 import type { User, Post } from "~/types";
 
 const TOPICS = [
@@ -99,7 +100,11 @@ function TrendingUserCard({ user, rank }: { user: User; rank: number }) {
         <UserAvatar user={user} size="sm" />
       </Link>
       <Link to={`/profile/${user.username}`} className="flex-1 min-w-0">
-        <p className="text-sm font-semibold truncate">{user.display_name}</p>
+        <p className="text-sm font-semibold truncate flex items-center gap-1 flex-wrap">
+          {user.display_name}
+          {user.is_owner && <OwnerBadge />}
+          {user.is_verified && <VerifiedBadge />}
+        </p>
         <p className="text-xs text-muted-foreground truncate">
           @{user.username}
         </p>

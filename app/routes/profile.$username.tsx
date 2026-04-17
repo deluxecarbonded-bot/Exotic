@@ -22,6 +22,7 @@ import {
   IconMask,
 } from "~/components/icons";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "~/components/ui/tabs";
+import { Button } from "~/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,7 @@ import { useQuestionStore } from "~/stores/question-store";
 import { usePostStore } from "~/stores/post-store";
 import { supabase } from "~/lib/supabase";
 import { UserAvatar } from "~/components/user-avatar";
+import { VerifiedBadge, OwnerBadge } from "~/components/badges";
 import type { User, Answer, Post } from "~/types";
 
 const AVATAR_COLORS = [
@@ -540,7 +542,7 @@ export default function ProfilePage({ params }: Route.ComponentProps) {
               )}
               <motion.button
                 whileTap={{ scale: 0.9 }}
-                className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                className="ghost-btn p-2 text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setShowShare(true)}
               >
                 <IconShare size={18} />
@@ -551,8 +553,10 @@ export default function ProfilePage({ params }: Route.ComponentProps) {
           {/* Avatar + Info */}
           <div className="flex flex-col items-center text-center mb-6">
             <UserAvatar user={profileUser} size="xl" />
-            <h1 className="text-xl font-bold mt-4 flex items-center gap-1.5">
+            <h1 className="text-xl font-bold mt-4 flex items-center gap-1.5 flex-wrap justify-center">
               {profileUser.display_name}
+              {profileUser.is_owner && <OwnerBadge />}
+              {profileUser.is_verified && <VerifiedBadge />}
               {profileUser.is_private && (
                 <IconLock size={16} className="text-muted-foreground" />
               )}
@@ -585,13 +589,12 @@ export default function ProfilePage({ params }: Route.ComponentProps) {
           {/* Action Buttons */}
           <div className="flex items-center justify-center gap-3 mb-6">
             {isOwnProfile ? (
-              <Link
-                to="/settings"
-                className="flex items-center gap-2 px-7 py-3 text-sm font-medium rounded-full bg-muted text-foreground hover:bg-muted/80 transition-colors"
-              >
-                <IconEdit size={14} />
-                Edit Profile
-              </Link>
+              <Button asChild variant="secondary" size="lg" className="rounded-full">
+                <Link to="/settings">
+                  <IconEdit size={14} />
+                  Edit Profile
+                </Link>
+              </Button>
             ) : (
               <>
                 <motion.button
@@ -650,12 +653,9 @@ export default function ProfilePage({ params }: Route.ComponentProps) {
                 Follow this account to see their answers, likes, and activity.
               </p>
               {!authUser ? (
-                <Link
-                  to="/login"
-                  className="mt-6 flex items-center gap-2 px-7 py-3 text-sm font-medium rounded-full bg-foreground text-background hover:opacity-90 transition-opacity"
-                >
-                  Sign in to follow
-                </Link>
+                <Button asChild size="lg" className="mt-6 rounded-full">
+                  <Link to="/login">Sign in to follow</Link>
+                </Button>
               ) : (
                 <motion.button
                   whileTap={{ scale: 0.95 }}
@@ -675,14 +675,14 @@ export default function ProfilePage({ params }: Route.ComponentProps) {
         /* Tabs */
         <div className="px-4 sm:px-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList variant="line" className="w-full justify-start gap-0 mb-4">
-              <TabsTrigger value="answers" className="flex-1">
+            <TabsList variant="line" className="w-full justify-start gap-0 mb-4 !h-11">
+              <TabsTrigger value="answers" className="flex-1 text-sm">
                 Answers
               </TabsTrigger>
-              <TabsTrigger value="posts" className="flex-1">
+              <TabsTrigger value="posts" className="flex-1 text-sm">
                 Posts
               </TabsTrigger>
-              <TabsTrigger value="likes" className="flex-1">
+              <TabsTrigger value="likes" className="flex-1 text-sm">
                 Likes
               </TabsTrigger>
             </TabsList>

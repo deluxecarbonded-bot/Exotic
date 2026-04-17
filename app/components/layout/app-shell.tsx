@@ -14,35 +14,36 @@ import {
   IconImage,
   IconRadio,
   IconPlay,
+  IconCrown,
 } from '~/components/icons';
 import { useThemeStore } from '~/stores/theme-store';
 import { useNotificationStore } from '~/stores/notification-store';
 import { useLiveStore } from '~/stores/live-store';
 import { useRealtimeSubscriptions } from '~/hooks/use-realtime';
+import { useAuthStore } from '~/stores/auth-store';
 import { type ReactNode } from 'react';
-
-const navItems = [
-  { path: '/', icon: IconHome, label: 'Home' },
-  { path: '/search', icon: IconSearch, label: 'Search' },
-  { path: '/inbox', icon: IconInbox, label: 'Inbox' },
-  { path: '/discover', icon: IconCompass, label: 'Discover' },
-  { path: '/posts', icon: IconImage, label: 'Posts' },
-  { path: '/live', icon: IconRadio, label: 'Live' },
-  { path: '/showcase', icon: IconPlay, label: 'Showcase' },
-  { path: '/notifications', icon: IconBell, label: 'Notifications' },
-  { path: '/profile/me', icon: IconUser, label: 'Profile' },
-  { path: '/settings', icon: IconSettings, label: 'Settings' },
-];
-
-// Mobile bottom bar shows a subset to avoid crowding; all items accessible via more menu
-const mobileNavItems = navItems;
 
 export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
   const { resolved, toggle } = useThemeStore();
   const { unreadCount } = useNotificationStore();
   const liveCount = useLiveStore((s) => s.liveCount);
+  const { user } = useAuthStore();
   useRealtimeSubscriptions();
+
+  const navItems = [
+    { path: '/', icon: IconHome, label: 'Home' },
+    { path: '/search', icon: IconSearch, label: 'Search' },
+    { path: '/inbox', icon: IconInbox, label: 'Inbox' },
+    { path: '/discover', icon: IconCompass, label: 'Discover' },
+    { path: '/posts', icon: IconImage, label: 'Posts' },
+    { path: '/live', icon: IconRadio, label: 'Live' },
+    { path: '/showcase', icon: IconPlay, label: 'Showcase' },
+    { path: '/notifications', icon: IconBell, label: 'Notifications' },
+    { path: '/profile/me', icon: IconUser, label: 'Profile' },
+    ...(user?.is_owner ? [{ path: '/owner-dashboard', icon: IconCrown, label: 'Owner' }] : []),
+    { path: '/settings', icon: IconSettings, label: 'Settings' },
+  ];
 
   const isActive = (path: string) =>
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
@@ -104,7 +105,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="p-3">
           <button
             onClick={toggle}
-            className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+            className="ghost-btn flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-lg transition-colors"
           >
             <AnimatePresence mode="wait">
               {resolved === 'dark' ? (
@@ -133,7 +134,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Mobile/Tablet Header - hidden on desktop */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl">
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 backdrop-blur-xl">
         <div className="flex items-center justify-between h-14 px-4">
           <Link to="/" className="flex items-center gap-2">
             <ExoticLogo size={24} />
@@ -141,7 +142,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
           <button
             onClick={toggle}
-            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+            className="ghost-btn p-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <AnimatePresence mode="wait">
               {resolved === 'dark' ? (
@@ -186,7 +187,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Mobile/Tablet Bottom Nav - hidden on desktop */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl">
         <div className="flex items-center justify-around h-16 px-1">
-          {mobileNavItems.map((item) => {
+          {navItems.map((item) => {
             const active = isActive(item.path);
             return (
               <Link

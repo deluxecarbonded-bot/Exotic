@@ -12,6 +12,7 @@ import { useNotificationStore } from "~/stores/notification-store";
 import { useFollowStore } from "~/stores/follow-store";
 import { useAuthStore } from "~/stores/auth-store";
 import { staggerContainer, staggerItemVariants, fadeInUp } from "~/components/animations";
+import { VerifiedBadge, OwnerBadge } from "~/components/badges";
 import type { Notification } from "~/types";
 
 export function meta({}: Route.MetaArgs) {
@@ -119,8 +120,10 @@ function NotificationItem({
           <div className="flex-1 min-w-0">
             <p className="text-sm leading-snug">
               {notification.actor && (
-                <span className="font-semibold">
+                <span className="font-semibold inline-flex items-center gap-1 flex-wrap">
                   {notification.actor.display_name}
+                  {notification.actor.is_owner && <OwnerBadge />}
+                  {notification.actor.is_verified && <VerifiedBadge />}
                 </span>
               )}{" "}
               <span className="text-muted-foreground">
@@ -188,7 +191,11 @@ function FollowRequestCard({
         <UserAvatar user={request.follower} size="sm" />
       </Link>
       <Link to={`/profile/${request.follower.username}`} className="flex-1 min-w-0">
-        <p className="text-sm font-semibold truncate">{request.follower.display_name}</p>
+        <p className="text-sm font-semibold truncate flex items-center gap-1 flex-wrap">
+          {request.follower.display_name}
+          {request.follower.is_owner && <OwnerBadge />}
+          {request.follower.is_verified && <VerifiedBadge />}
+        </p>
         <p className="text-xs text-muted-foreground truncate">@{request.follower.username}</p>
       </Link>
       <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -334,14 +341,14 @@ export default function Notifications() {
           onValueChange={(v) => setActiveTab(v as FilterTab)}
         >
           <div className="px-4">
-            <TabsList className="w-full">
-              <TabsTrigger value="all" className="flex-1">
+            <TabsList className="w-full !h-11">
+              <TabsTrigger value="all" className="flex-1 text-sm">
                 All
               </TabsTrigger>
-              <TabsTrigger value="questions" className="flex-1">
+              <TabsTrigger value="questions" className="flex-1 text-sm">
                 Questions
               </TabsTrigger>
-              <TabsTrigger value="follows" className="flex-1 relative">
+              <TabsTrigger value="follows" className="flex-1 text-sm relative">
                 Follows
                 {hasRequests && (
                   <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold rounded-full bg-foreground text-background">
@@ -349,7 +356,7 @@ export default function Notifications() {
                   </span>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="likes" className="flex-1">
+              <TabsTrigger value="likes" className="flex-1 text-sm">
                 Likes
               </TabsTrigger>
             </TabsList>

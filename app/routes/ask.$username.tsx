@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useParams, useNavigate } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "~/components/layout/app-shell";
+import { Button } from "~/components/ui/button";
 import { IconArrowLeft, IconSend, IconCheck, IconUser, IconSearch, IconMask } from "~/components/icons";
 import { fadeInUp, scaleIn, popIn } from "~/components/animations";
 import { UserAvatar } from "~/components/user-avatar";
@@ -41,12 +42,9 @@ function SuccessView({ username }: { username: string }) {
         their inbox.
       </p>
       <div className="flex items-center gap-3">
-        <Link
-          to="/"
-          className="px-4 py-2 text-sm font-medium rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors"
-        >
-          Go home
-        </Link>
+        <Button asChild variant="secondary" size="lg">
+          <Link to="/">Go home</Link>
+        </Button>
         <motion.button
           whileTap={{ scale: 0.95 }}
           className="px-4 py-2 text-sm font-medium rounded-lg bg-foreground text-background hover:opacity-90 transition-opacity"

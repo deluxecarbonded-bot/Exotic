@@ -4,9 +4,9 @@ import { Link } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "~/components/layout/app-shell";
 import { AnswerCard, PostCard, EmptyState } from "~/components/cards";
+import { Button } from "~/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "~/components/ui/tabs";
-import { ShareModal } from "~/components/share-modal";
-import { IconShare, IconMessageCircle, IconCompass, IconRadio } from "~/components/icons";
+import { IconMessageCircle, IconCompass, IconRadio } from "~/components/icons";
 import { useAuthStore } from "~/stores/auth-store";
 import { useQuestionStore } from "~/stores/question-store";
 import { usePostStore } from "~/stores/post-store";
@@ -19,42 +19,6 @@ export function meta({}: Route.MetaArgs) {
     { title: "Exotic - Ask me anything" },
     { name: "description", content: "Anonymous Q&A social platform" },
   ];
-}
-
-function PromptCard({
-  username,
-  onShare,
-}: {
-  username?: string;
-  onShare: () => void;
-}) {
-  const askUrl = username ? `/ask/${username}` : "#";
-
-  return (
-    <div className="bg-foreground text-background p-6 sm:p-8 rounded-xl mx-4 mt-4">
-      <h2 className="text-lg font-bold mb-1">Ask me anything</h2>
-      <p className="text-sm opacity-70 mb-4">
-        Share your profile link and let people ask you questions anonymously.
-      </p>
-      <div className="flex items-center gap-2">
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          onClick={onShare}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-background text-foreground text-sm font-medium hover:opacity-90 transition-opacity"
-        >
-          <IconShare size={16} />
-          Share your link
-        </motion.button>
-        <Link
-          to={askUrl}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#fff] text-black dark:bg-[#000] dark:text-white text-sm font-medium hover:opacity-90 transition-opacity"
-        >
-          <IconMessageCircle size={16} />
-          Ask
-        </Link>
-      </div>
-    </div>
-  );
 }
 
 function FeedSkeleton() {
@@ -83,7 +47,8 @@ function FeedSkeleton() {
 
 type FeedItem = { type: 'answer'; data: Answer; time: number } | { type: 'post'; data: Post; time: number };
 
-function MixedFeedList({ answers, posts }: { answers: Answer[]; posts: Post[] }) {
+function MixedFeedList({ answers, posts, username }: { answers: Answer[]; posts: Post[]; username?: string }) {
+  const askUrl = username ? `/ask/${username}` : "#";
   const items: FeedItem[] = useMemo(() => {
     const all: FeedItem[] = [
       ...answers.map((a) => ({ type: 'answer' as const, data: a, time: new Date(a.created_at).getTime() })),
@@ -99,12 +64,19 @@ function MixedFeedList({ answers, posts }: { answers: Answer[]; posts: Post[] })
         title="Nothing here yet"
         description="Follow people to see their activity in your feed, or discover new users to follow."
         action={
-          <Link
-            to="/discover"
-            className="inline-flex px-4 py-2 rounded-lg bg-foreground text-background text-sm font-medium hover:opacity-90 transition-opacity"
-          >
-            Discover people
-          </Link>
+          <div className="flex flex-col items-center gap-3">
+            <Button asChild size="lg">
+              <Link to="/discover">
+                Discover people
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="secondary" className="ask-btn">
+              <Link to={askUrl}>
+                <IconMessageCircle size={16} />
+                Ask me
+              </Link>
+            </Button>
+          </div>
         }
       />
     );
@@ -131,11 +103,6 @@ export default function HomePage() {
   const liveCount = useLiveStore((s) => s.liveCount);
   const [activeTab, setActiveTab] = useState("for-you");
   const [refreshing, setRefreshing] = useState(false);
-  const [showShare, setShowShare] = useState(false);
-
-  const shareUrl = typeof window !== "undefined" && user?.username
-    ? `${window.location.origin}/ask/${user.username}`
-    : "";
 
   useEffect(() => {
     if (!user?.id) return;
@@ -179,11 +146,6 @@ export default function HomePage() {
   return (
     <AppShell>
       <div className="max-w-2xl mx-auto">
-        <PromptCard
-          username={user?.username}
-          onShare={() => setShowShare(true)}
-        />
-
         <div className="mt-2">
           {/* Live banner */}
           <AnimatePresence>
@@ -212,11 +174,11 @@ export default function HomePage() {
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <div className="px-4 pt-2">
-              <TabsList variant="line" className="w-full">
-                <TabsTrigger value="for-you" className="flex-1">
+              <TabsList variant="line" className="w-full !h-11">
+                <TabsTrigger value="for-you" className="flex-1 text-sm">
                   For You
                 </TabsTrigger>
-                <TabsTrigger value="following" className="flex-1">
+                <TabsTrigger value="following" className="flex-1 text-sm">
                   Following
                 </TabsTrigger>
               </TabsList>
@@ -247,7 +209,7 @@ export default function HomePage() {
                   </motion.div>
                 ) : (
                   <motion.div key="feed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                    <MixedFeedList answers={forYouAnswers} posts={forYouPosts} />
+                    <MixedFeedList answers={forYouAnswers} posts={forYouPosts} username={user?.username} />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -261,7 +223,7 @@ export default function HomePage() {
                   </motion.div>
                 ) : (
                   <motion.div key="following-feed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                    <MixedFeedList answers={followingAnswers} posts={followingPosts} />
+                    <MixedFeedList answers={followingAnswers} posts={followingPosts} username={user?.username} />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -274,7 +236,7 @@ export default function HomePage() {
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={handleRefresh}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="text-sm px-5 py-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
             >
               {refreshing ? "Refreshing..." : "Refresh feed"}
             </motion.button>
@@ -282,13 +244,6 @@ export default function HomePage() {
         )}
       </div>
 
-      {shareUrl && (
-        <ShareModal
-          open={showShare}
-          onClose={() => setShowShare(false)}
-          url={shareUrl}
-        />
-      )}
     </AppShell>
   );
 }

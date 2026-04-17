@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate, useFetcher } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "~/components/layout/app-shell";
+import { Button } from "~/components/ui/button";
 import { UserAvatar } from "~/components/user-avatar";
 import { getServerSupabase } from "~/lib/supabase.server";
 import { deleteLiveInput } from "~/lib/cloudflare-stream.server";
@@ -636,12 +637,9 @@ function StreamEndedOverlay() {
         </div>
         <p className="text-sm font-semibold mb-1">Stream ended</p>
         <p className="text-xs text-muted-foreground mb-4">This live stream has ended.</p>
-        <Link
-          to="/live"
-          className="inline-flex px-4 py-2 rounded-lg bg-foreground text-background text-sm font-medium hover:opacity-90 transition-opacity"
-        >
-          Browse live streams
-        </Link>
+        <Button asChild size="lg">
+          <Link to="/live">Browse live streams</Link>
+        </Button>
       </div>
     </motion.div>
   );

@@ -37,7 +37,7 @@ function AnswerForm({
   };
 
   return (
-    <div className="bg-background p-4 sm:p-6">
+    <div className="p-4 sm:p-6">
       <div className="mb-3">
         <div className="flex items-center gap-2 mb-1">
           <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
@@ -161,8 +161,8 @@ export default function InboxPage() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="px-4">
-            <TabsList variant="line" className="w-full">
-              <TabsTrigger value="pending" className="flex-1 gap-2">
+            <TabsList variant="line" className="w-full !h-11">
+              <TabsTrigger value="pending" className="flex-1 gap-2 text-sm">
                 Pending
                 {pendingQuestions.length > 0 && (
                   <Badge
@@ -173,7 +173,7 @@ export default function InboxPage() {
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="answered" className="flex-1">
+              <TabsTrigger value="answered" className="flex-1 text-sm">
                 Answered
               </TabsTrigger>
             </TabsList>

@@ -13,11 +13,13 @@ export default [
     route("posts", "routes/posts.tsx"),
     route("live", "routes/live.tsx"),
     route("live/:streamId", "routes/live.$streamId.tsx"),
+    route("owner-dashboard", "routes/owner-dashboard.tsx"),
   ]),
 
   // Temporary showcase
   route("showcase", "routes/showcase.tsx"),
   route("api/resolve-username", "routes/api.resolve-username.ts"),
+  route("api/track-session", "routes/api.track-session.ts"),
 
   // Public routes
   route("ask/:username", "routes/ask.$username.tsx"),

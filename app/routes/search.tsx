@@ -131,7 +131,7 @@ export default function Search() {
     <AppShell>
       <div className="max-w-2xl mx-auto">
         {/* Search Input */}
-        <div className="sticky top-16 z-10 bg-background px-4 pt-4 pb-2">
+        <div className="sticky top-16 z-10 px-4 pt-4 pb-2">
           <form onSubmit={handleSearchSubmit} className="relative">
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
               <IconSearch size={16} />
@@ -141,7 +141,7 @@ export default function Search() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search people, questions, answers..."
-              className="pl-9 pr-9 h-9"
+              className="pl-9 pr-9 h-9 bg-transparent"
             />
             {query && (
               <button
@@ -220,14 +220,14 @@ export default function Search() {
                 onValueChange={(v) => setActiveTab(v as SearchTab)}
               >
                 <div className="px-4">
-                  <TabsList className="w-full">
-                    <TabsTrigger value="people" className="flex-1">
+                  <TabsList className="w-full !h-11">
+                    <TabsTrigger value="people" className="flex-1 text-sm">
                       People {userResults.length > 0 && `(${userResults.length})`}
                     </TabsTrigger>
-                    <TabsTrigger value="questions" className="flex-1">
+                    <TabsTrigger value="questions" className="flex-1 text-sm">
                       Questions
                     </TabsTrigger>
-                    <TabsTrigger value="answers" className="flex-1">
+                    <TabsTrigger value="answers" className="flex-1 text-sm">
                       Answers {answerResults.length > 0 && `(${answerResults.length})`}
                     </TabsTrigger>
                   </TabsList>

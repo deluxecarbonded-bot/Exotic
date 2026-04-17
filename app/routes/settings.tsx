@@ -27,6 +27,7 @@ import {
   IconX,
   IconEdit,
 } from "~/components/icons";
+import { UserAvatar } from "~/components/user-avatar";
 import { useAuthStore } from "~/stores/auth-store";
 import { useThemeStore } from "~/stores/theme-store";
 import { supabase } from "~/lib/supabase";
@@ -121,7 +122,7 @@ function StatusBanner({
 
 export default function Settings() {
   const { user, updateProfile, logout } = useAuthStore();
-  const { mode, setMode } = useThemeStore();
+  const { mode, setMode, liquidGlass, setLiquidGlass } = useThemeStore();
   const navigate = useNavigate();
 
   // Profile
@@ -413,25 +414,12 @@ export default function Settings() {
               <div className="flex items-start gap-4 mb-2">
                 <div className="relative group">
                   {/* Avatar display */}
-                  {avatarPreview ? (
-                    <img
-                      src={avatarPreview}
-                      alt="Avatar preview"
-                      className="w-20 h-20 rounded-full object-cover flex-shrink-0"
-                    />
-                  ) : avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt="Your avatar"
-                      className="w-20 h-20 rounded-full object-cover flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 rounded-full bg-foreground text-background flex items-center justify-center flex-shrink-0">
-                      <span className="text-2xl font-bold">
-                        {displayName?.[0]?.toUpperCase() ?? "?"}
-                      </span>
-                    </div>
-                  )}
+                  <UserAvatar
+                    avatarUrl={avatarPreview ?? avatarUrl}
+                    name={displayName ?? "?"}
+                    size="xl"
+                    className="w-20 h-20"
+                  />
 
                   {/* Hover overlay */}
                   <button
@@ -821,6 +809,20 @@ export default function Settings() {
                   <span className="capitalize">{theme}</span>
                 </motion.button>
               ))}
+            </div>
+
+            {/* Liquid Glass */}
+            <div className="mt-4 flex items-center justify-between rounded-xl bg-muted/50 px-4 py-3">
+              <div>
+                <p className="text-sm font-medium">Liquid Glass</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Frosted-glass surfaces throughout the app
+                </p>
+              </div>
+              <Switch
+                checked={liquidGlass}
+                onCheckedChange={setLiquidGlass}
+              />
             </div>
           </section>
 
