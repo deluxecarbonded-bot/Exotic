@@ -16,8 +16,6 @@ export default [
     route("owner-dashboard", "routes/owner-dashboard.tsx"),
   ]),
 
-  // Temporary showcase
-  route("showcase", "routes/showcase.tsx"),
   route("api/resolve-username", "routes/api.resolve-username.ts"),
   route("api/track-session", "routes/api.track-session.ts"),
 
