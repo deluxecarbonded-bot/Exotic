@@ -1,7 +1,7 @@
 import type { Route } from "./+types/api.reset-password";
 
 export async function action({ request, context }: Route.ActionArgs) {
-  const env = context.cloudflare.env as any;
+  const env = ((context as any)?.cloudflare?.env ?? process.env) as any;
   const { email, token, password } = await request.json();
 
   if (!email || !token || !password) {

@@ -24,6 +24,7 @@
 		"@fontsource-variable/nunito-sans": "^5.2.5",
 		"@supabase/supabase-js": "^2.103.0",
 		"@tanstack/react-table": "^8.21.3",
+		"@vercel/react-router": "^1.2.6",
 		"agents": "^0.7.2",
 		"ai": "^6.0.0",
 		"class-variance-authority": "^0.7.1",

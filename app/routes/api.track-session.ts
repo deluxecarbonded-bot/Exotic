@@ -125,7 +125,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     };
     if (!user_id) return data({ error: "user_id required" }, { status: 400 });
 
-    const env = context.cloudflare.env as any;
+    const env = ((context as any)?.cloudflare?.env ?? process.env) as any;
     const cf  = (request as any).cf as Record<string, string> | undefined;
 
     const ip =

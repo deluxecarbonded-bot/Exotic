@@ -6,7 +6,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const { username } = await request.json();
   if (!username) return data({ error: "Username required" }, { status: 400 });
 
-  const env = context.cloudflare.env as any;
+  const env = ((context as any)?.cloudflare?.env ?? process.env) as any;
   const admin = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
   const { data: profile, error } = await admin
