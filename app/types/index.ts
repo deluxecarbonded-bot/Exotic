@@ -169,6 +169,7 @@ export interface ChannelPost {
   views_count: number;
   reactions_count: number;
   is_pinned: boolean;
+  posted_as: 'channel' | 'user';
   created_at: string;
   my_reaction?: string | null;
   reactions?: { emoji: string; count: number }[];

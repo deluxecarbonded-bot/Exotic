@@ -17,7 +17,7 @@ interface ChannelState {
 
   // Posts
   fetchPosts: (channelId: string) => Promise<ChannelPost[]>;
-  createPost: (channelId: string, userId: string, content: string, mediaFiles: File[]) => Promise<ChannelPost | null>;
+  createPost: (channelId: string, userId: string, content: string, mediaFiles: File[], postedAs?: 'channel' | 'user') => Promise<ChannelPost | null>;
   deletePost: (postId: string) => Promise<void>;
   pinPost: (postId: string, pinned: boolean) => Promise<void>;
   reactToPost: (postId: string, userId: string, emoji: string) => Promise<void>;
@@ -140,7 +140,7 @@ export const useChannelStore = create<ChannelState>((set, get) => ({
     return (data ?? []) as ChannelPost[];
   },
 
-  createPost: async (channelId, userId, content, mediaFiles) => {
+  createPost: async (channelId, userId, content, mediaFiles, postedAs = 'channel') => {
     const mediaUrls: string[] = [];
     const mediaTypes: string[] = [];
 
@@ -156,7 +156,7 @@ export const useChannelStore = create<ChannelState>((set, get) => ({
 
     const { data, error } = await supabase
       .from('channel_posts')
-      .insert({ channel_id: channelId, user_id: userId, content: content || null, media_urls: mediaUrls, media_types: mediaTypes })
+      .insert({ channel_id: channelId, user_id: userId, content: content || null, media_urls: mediaUrls, media_types: mediaTypes, posted_as: postedAs })
       .select('*, user:profiles!channel_posts_user_id_fkey(id,username,display_name,avatar_url,is_verified,is_owner)')
       .single();
 
