@@ -66,7 +66,11 @@ function CreatePostForm({ onCreated }: { onCreated: () => void }) {
   };
 
   const handleSubmit = async () => {
-    if (!user?.id || files.length === 0) return;
+    if (!user?.id) return;
+    if (files.length === 0 && !caption.trim()) {
+      setError("Add a photo, video, or write something.");
+      return;
+    }
     setSubmitting(true);
     setError("");
     try {
@@ -161,7 +165,7 @@ function CreatePostForm({ onCreated }: { onCreated: () => void }) {
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={handleSubmit}
-          disabled={files.length === 0 || submitting}
+          disabled={submitting || (files.length === 0 && !caption.trim())}
           className="px-5 py-2 text-sm font-medium rounded-lg bg-foreground text-background hover:opacity-90 transition-opacity disabled:opacity-40"
         >
           {submitting ? (
