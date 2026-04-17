@@ -21,6 +21,7 @@ export default [
   route("api/send-reset-code", "routes/api.send-reset-code.ts"),
   route("api/verify-reset-code", "routes/api.verify-reset-code.ts"),
   route("api/reset-password", "routes/api.reset-password.ts"),
+  route("api/auth-email-hook", "routes/api.auth-email-hook.ts"),
 
   // Public routes
   route("ask/:username", "routes/ask.$username.tsx"),

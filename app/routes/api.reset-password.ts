@@ -1,5 +1,7 @@
 import type { Route } from "./+types/api.reset-password";
 import { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } from "~/lib/supabase-admin";
+import { sendEmail } from "~/lib/resend";
+import { passwordChangedEmail } from "~/lib/email-templates";
 
 export async function action({ request }: Route.ActionArgs) {
   try {
@@ -58,6 +60,15 @@ export async function action({ request }: Route.ActionArgs) {
         app_metadata: { ...meta, reset_token: null, reset_token_expires: null },
       }),
     });
+
+    // Send password changed confirmation email (fire and forget)
+    const displayName = user.user_metadata?.display_name || user.user_metadata?.username || "there";
+    const loginUrl = new URL(request.url).origin + "/login";
+    sendEmail({
+      to: email,
+      subject: "Your Exotic password was changed",
+      html: passwordChangedEmail(displayName, loginUrl),
+    }).catch(() => {});
 
     return Response.json({ ok: true });
   } catch (err) {
