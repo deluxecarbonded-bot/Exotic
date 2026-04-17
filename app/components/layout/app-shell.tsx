@@ -14,6 +14,7 @@ import {
   IconImage,
   IconRadio,
   IconCrown,
+  IconMegaphone,
 } from '~/components/icons';
 import { useThemeStore } from '~/stores/theme-store';
 import { useNotificationStore } from '~/stores/notification-store';
@@ -36,6 +37,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     { path: '/inbox', icon: IconInbox, label: 'Inbox' },
     { path: '/discover', icon: IconCompass, label: 'Discover' },
     { path: '/posts', icon: IconImage, label: 'Posts' },
+    { path: '/channels', icon: IconMegaphone, label: 'Channels' },
     { path: '/live', icon: IconRadio, label: 'Live' },
     { path: '/notifications', icon: IconBell, label: 'Notifications' },
     { path: '/profile/me', icon: IconUser, label: 'Profile' },

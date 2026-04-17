@@ -141,3 +141,44 @@ export interface LiveViewer {
   user: User | null;
   joined_at: string;
 }
+
+export interface Channel {
+  id: string;
+  name: string;
+  handle: string;
+  description: string | null;
+  avatar_url: string | null;
+  owner_id: string;
+  owner?: User;
+  is_public: boolean;
+  subscribers_count: number;
+  posts_count: number;
+  created_at: string;
+  is_subscribed?: boolean;
+  member_role?: 'owner' | 'admin' | 'member' | null;
+}
+
+export interface ChannelPost {
+  id: string;
+  channel_id: string;
+  user_id: string;
+  user?: User;
+  content: string | null;
+  media_urls: string[];
+  media_types: string[];
+  views_count: number;
+  reactions_count: number;
+  is_pinned: boolean;
+  created_at: string;
+  my_reaction?: string | null;
+  reactions?: { emoji: string; count: number }[];
+}
+
+export interface ChannelMember {
+  id: string;
+  channel_id: string;
+  user_id: string;
+  user?: User;
+  role: 'owner' | 'admin' | 'member';
+  joined_at: string;
+}

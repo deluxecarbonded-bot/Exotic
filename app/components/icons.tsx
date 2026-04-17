@@ -501,3 +501,20 @@ export function IconChevronLeft({ size = 24, strokeWidth = 2, ...props }: IconPr
     </motion.svg>
   );
 }
+
+export function IconChannel({ size = 24, strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M22 8.5c0 6-9 13-9 13s-9-7-9-13a9 9 0 0 1 18 0z" />
+      <circle cx="13" cy="8.5" r="2.5" />
+    </svg>
+  );
+}
+
+export function IconMegaphone({ size = 24, strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="m3 11 19-9-9 19-2-8-8-2z" />
+    </svg>
+  );
+}
