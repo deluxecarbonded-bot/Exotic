@@ -94,7 +94,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username }),
       });
-      const resolved = await res.json();
+      let resolved: any = {};
+      try { resolved = await res.json(); } catch { /* non-JSON response */ }
       if (!res.ok || !resolved.email) {
         set({ isLoading: false, error: resolved.error ?? 'No account found with that username.' });
         return false;
