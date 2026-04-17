@@ -409,75 +409,75 @@ export function PostCard({ post }: { post: Post }) {
           </div>
         )}
 
-        {/* Tappable post body — double tap to like */}
-        <div className="relative select-none cursor-default" onClick={handleDoubleTap}>
-          {/* Media */}
-          {post.media_urls.length > 0 && (() => {
-            const raw = post.media_types[activeMedia] ?? 'image';
-            const { isVideo, filter, zoom } = parseMediaType(raw);
-            const mediaStyle: React.CSSProperties = {
-              filter: filter !== 'none' ? filter : undefined,
-              transform: zoom !== 1 ? `scale(${zoom})` : undefined,
-              transition: 'filter 0.2s, transform 0.2s',
-            };
-            return (
-              <div className="relative rounded-xl overflow-hidden mb-3 bg-muted">
-                {isVideo ? (
-                  <video
-                    src={post.media_urls[activeMedia]}
-                    controls
-                    className="w-full max-h-[500px] object-contain"
-                    preload="metadata"
-                    style={mediaStyle}
-                    onClick={e => e.stopPropagation()}
-                  />
-                ) : (
-                  <img
-                    src={post.media_urls[activeMedia]}
-                    alt=""
-                    className="w-full max-h-[500px] object-contain"
-                    loading="lazy"
-                    style={mediaStyle}
-                  />
-                )}
-                {post.media_urls.length > 1 && (
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-                    {post.media_urls.map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={e => { e.stopPropagation(); setActiveMedia(i); }}
-                        className={`w-1.5 h-1.5 rounded-full transition-colors ${i === activeMedia ? 'bg-white' : 'bg-white/50'}`}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
+        {/* Media */}
+        {post.media_urls.length > 0 && (() => {
+          const raw = post.media_types[activeMedia] ?? 'image';
+          const { isVideo, filter, zoom } = parseMediaType(raw);
+          const mediaStyle: React.CSSProperties = {
+            filter: filter !== 'none' ? filter : undefined,
+            transform: zoom !== 1 ? `scale(${zoom})` : undefined,
+            transition: 'filter 0.2s, transform 0.2s',
+          };
+          return (
+            <div
+              className="relative rounded-xl overflow-hidden mb-3 bg-muted"
+              onClick={handleDoubleTap}
+            >
+              {isVideo ? (
+                <video
+                  src={post.media_urls[activeMedia]}
+                  controls
+                  className="w-full max-h-[500px] object-contain"
+                  preload="metadata"
+                  style={mediaStyle}
+                  onClick={e => e.stopPropagation()}
+                />
+              ) : (
+                <img
+                  src={post.media_urls[activeMedia]}
+                  alt=""
+                  className="w-full max-h-[500px] object-contain"
+                  loading="lazy"
+                  style={mediaStyle}
+                />
+              )}
+              {post.media_urls.length > 1 && (
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+                  {post.media_urls.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={e => { e.stopPropagation(); setActiveMedia(i); }}
+                      className={`w-1.5 h-1.5 rounded-full transition-colors ${i === activeMedia ? 'bg-white' : 'bg-white/50'}`}
+                    />
+                  ))}
+                </div>
+              )}
 
-          {/* Caption */}
-          {post.caption && <p className="text-sm leading-relaxed mb-3 cursor-text select-text">{post.caption}</p>}
+              {/* Double-tap heart burst — inside the image */}
+              <AnimatePresence>
+                {doubleTapHeart && (
+                  <motion.div
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                    initial={{ opacity: 0, scale: 0.3 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 1.5 }}
+                    transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
+                  >
+                    <motion.div
+                      animate={{ scale: [1, 1.15, 0.95, 1] }}
+                      transition={{ duration: 0.45, ease: 'easeOut' }}
+                    >
+                      <IconHeart size={96} filled className="text-red-500 drop-shadow-[0_2px_12px_rgba(239,68,68,0.6)]" />
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        })()}
 
-          {/* Double-tap heart burst */}
-          <AnimatePresence>
-            {doubleTapHeart && (
-              <motion.div
-                className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                initial={{ opacity: 0, scale: 0.4 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 1.4 }}
-                transition={{ duration: 0.35, ease: 'easeOut' }}
-              >
-                <motion.div
-                  animate={{ scale: [1, 1.18, 1] }}
-                  transition={{ duration: 0.4, ease: 'easeOut' }}
-                >
-                  <IconHeart size={90} filled className="text-red-500 drop-shadow-lg" />
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        {/* Caption */}
+        {post.caption && <p className="text-sm leading-relaxed mb-3">{post.caption}</p>}
 
         {/* Actions — icon only, no background ever */}
         <div className="flex items-center gap-5">
