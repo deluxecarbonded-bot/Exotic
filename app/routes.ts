@@ -13,8 +13,10 @@ export default [
     route("posts", "routes/posts.tsx"),
     route("live", "routes/live.tsx"),
     route("live/:streamId", "routes/live.$streamId.tsx"),
-    route("channels", "routes/channels.tsx"),
-    route("channels/:handle", "routes/channels.$handle.tsx"),
+    route("channels", "routes/channels.tsx", [
+      index("routes/channels._index.tsx"),
+      route(":handle", "routes/channels.$handle.tsx"),
+    ]),
     route("owner-dashboard", "routes/owner-dashboard.tsx"),
   ]),
 

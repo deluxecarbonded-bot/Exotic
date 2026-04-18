@@ -134,8 +134,7 @@ export const useChannelStore = create<ChannelState>((set, get) => ({
       .from('channel_posts')
       .select('*, user:profiles!channel_posts_user_id_fkey(id,username,display_name,avatar_url,is_verified,is_owner)')
       .eq('channel_id', channelId)
-      .order('is_pinned', { ascending: false })
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: true })
       .limit(50);
     return (data ?? []) as ChannelPost[];
   },

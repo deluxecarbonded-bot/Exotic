@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '~/stores/auth-store';
@@ -8,7 +8,7 @@ import { parseMediaType } from '~/components/media-editor';
 import {
   IconArrowLeft, IconUsers, IconLock, IconGlobe, IconMoreHorizontal,
   IconTrash, IconPin, IconX, IconSend, IconImage, IconMegaphone,
-  IconChevronRight, IconCrown, IconShield, IconUser,
+  IconChevronRight, IconCrown, IconShield,
 } from '~/components/icons';
 import { UserAvatar } from '~/components/user-avatar';
 import { VerifiedBadge, OwnerBadge } from '~/components/badges';
@@ -487,11 +487,21 @@ export default function ChannelDetailPage() {
   const [members, setMembers] = useState<ChannelMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [subLoading, setSubLoading] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(false); // mobile only
+  const [showSidebar, setShowSidebar] = useState(false);
+  const feedEndRef = useRef<HTMLDivElement>(null);
 
   const canAdmin = channel?.member_role === 'owner' || channel?.member_role === 'admin';
 
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'auto') => {
+    feedEndRef.current?.scrollIntoView({ behavior });
+  }, []);
+
   useEffect(() => { if (handle) loadChannel(); }, [handle, user?.id]);
+
+  // Scroll to bottom when posts first load
+  useEffect(() => {
+    if (posts.length > 0 && !loading) scrollToBottom('auto');
+  }, [loading]);
 
   async function loadChannel() {
     setLoading(true);
@@ -570,7 +580,7 @@ export default function ChannelDetailPage() {
 
   const handlePinPost = async (postId: string, pinned: boolean) => {
     await pinPost(postId, pinned);
-    setPosts(p => [...p.map(x => x.id === postId ? { ...x, is_pinned: pinned } : x)].sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0)));
+    setPosts(p => p.map(x => x.id === postId ? { ...x, is_pinned: pinned } : x));
   };
 
   const handleReact = async (postId: string, emoji: string) => {
@@ -600,7 +610,7 @@ export default function ChannelDetailPage() {
   if (loading) return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
-        <button onClick={() => navigate(-1)} className="ghost-btn text-muted-foreground"><IconArrowLeft size={20} /></button>
+        <button onClick={() => navigate('/channels')} className="ghost-btn text-muted-foreground md:hidden"><IconArrowLeft size={20} /></button>
         <div className="flex items-center gap-2 flex-1 animate-pulse"><div className="w-9 h-9 rounded-full bg-muted" /><div className="h-4 w-32 bg-muted rounded" /></div>
       </div>
       <div className="flex-1 flex items-center justify-center">
@@ -613,9 +623,12 @@ export default function ChannelDetailPage() {
     <div className="flex flex-col items-center justify-center h-full gap-3 px-6 text-center">
       <IconMegaphone size={40} className="text-muted-foreground/30" />
       <p className="font-semibold">Channel not found</p>
-      <button onClick={() => navigate('/channels')} className="text-sm text-muted-foreground hover:underline">← Back to Channels</button>
+      <button onClick={() => navigate('/channels')} className="text-sm text-muted-foreground hover:underline">← Back</button>
     </div>
   );
+
+  // Pinned posts banner
+  const pinnedPost = posts.find(p => p.is_pinned);
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -624,7 +637,8 @@ export default function ChannelDetailPage() {
         {/* Header */}
         <div className="sticky top-0 z-10 bg-background/90 backdrop-blur-xl border-b border-border flex-shrink-0">
           <div className="flex items-center gap-2 px-3 py-2.5">
-            <button onClick={() => navigate('/channels')} className="ghost-btn text-muted-foreground hover:text-foreground flex-shrink-0">
+            {/* Back button — mobile only */}
+            <button onClick={() => navigate('/channels')} className="ghost-btn text-muted-foreground hover:text-foreground flex-shrink-0 md:hidden">
               <IconArrowLeft size={20} />
             </button>
             <div className="flex items-center gap-2.5 flex-1 min-w-0">
@@ -645,7 +659,6 @@ export default function ChannelDetailPage() {
                   {subLoading ? '…' : channel.is_subscribed ? 'Joined' : 'Join'}
                 </motion.button>
               )}
-              {/* Members button — shows sidebar on mobile, always visible */}
               <button onClick={() => setShowSidebar(true)} className="ghost-btn flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors xl:hidden">
                 <IconUsers size={18} />
               </button>
@@ -656,9 +669,20 @@ export default function ChannelDetailPage() {
               )}
             </div>
           </div>
+
+          {/* Pinned post banner */}
+          {pinnedPost && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-muted/50 border-t border-border text-xs">
+              <IconPin size={12} className="text-muted-foreground flex-shrink-0" />
+              <p className="text-muted-foreground truncate flex-1">
+                <span className="font-medium text-foreground">Pinned: </span>
+                {pinnedPost.content ?? (pinnedPost.media_urls.length > 0 ? '📎 Media' : '')}
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* Posts feed */}
+        {/* Posts feed — chat style, newest at bottom */}
         <div className="flex-1 overflow-y-auto">
           {posts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center px-6">
@@ -667,7 +691,7 @@ export default function ChannelDetailPage() {
               {canAdmin && <p className="text-xs text-muted-foreground mt-1">Post something to get started</p>}
             </div>
           ) : (
-            <div className="divide-y divide-border">
+            <div className="py-2">
               <AnimatePresence initial={false}>
                 {posts.map(post => (
                   <ChannelPostCard
@@ -682,16 +706,22 @@ export default function ChannelDetailPage() {
                   />
                 ))}
               </AnimatePresence>
+              {/* Scroll anchor */}
+              <div ref={feedEndRef} />
             </div>
           )}
         </div>
 
-        {/* Composer */}
+        {/* Composer — pinned to bottom */}
         {canAdmin && user && (
           <PostComposer
             channel={channel}
             user={user as any}
-            onPosted={post => setPosts(prev => [post as any, ...prev])}
+            onPosted={post => {
+              setPosts(prev => [...prev, post as any]);
+              // Scroll to new message
+              setTimeout(() => scrollToBottom('smooth'), 50);
+            }}
           />
         )}
       </div>
