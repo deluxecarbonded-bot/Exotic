@@ -126,6 +126,18 @@ export const usePostStore = create<PostState>((set, get) => ({
             : p
         ),
       }));
+      // Send notification to post owner
+      const post = get().posts.find((p) => p.id === postId);
+      if (post && post.user_id !== userId) {
+        await supabase.from('notifications').insert({
+          user_id: post.user_id,
+          type: 'post_like',
+          actor_id: userId,
+          target_id: postId,
+          target_type: 'post',
+          message: 'liked your post',
+        });
+      }
     }
   },
 

@@ -215,6 +215,23 @@ export function CommentsModal({
       setText('');
       setReplyTo(null);
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+
+      // Send notification to post owner
+      const { data: post } = await supabase
+        .from('posts')
+        .select('user_id')
+        .eq('id', postId)
+        .single();
+      if (post && post.user_id !== user.id) {
+        await supabase.from('notifications').insert({
+          user_id: post.user_id,
+          type: 'post_comment',
+          actor_id: user.id,
+          target_id: postId,
+          target_type: 'post',
+          message: 'commented on your post',
+        });
+      }
     }
     setSubmitting(false);
   };

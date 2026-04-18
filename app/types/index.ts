@@ -62,11 +62,11 @@ export interface Comment {
 
 export interface Notification {
   id: string;
-  type: 'question_received' | 'answer_posted' | 'follow' | 'like' | 'comment' | 'mention' | 'live_stream';
+  type: 'question_received' | 'answer_posted' | 'follow' | 'like' | 'comment' | 'mention' | 'live_stream' | 'post_like' | 'post_comment';
   actor_id: string;
   actor: User | null;
   target_id: string;
-  target_type: 'question' | 'answer' | 'comment' | 'user' | 'live_stream';
+  target_type: 'question' | 'answer' | 'comment' | 'user' | 'live_stream' | 'post';
   message: string;
   is_read: boolean;
   created_at: string;

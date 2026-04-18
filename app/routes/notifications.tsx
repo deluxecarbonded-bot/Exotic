@@ -7,11 +7,21 @@ import { EmptyState } from "~/components/cards";
 import { UserAvatar } from "~/components/user-avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "~/components/ui/tabs";
 import { Button } from "~/components/ui/button";
-import { IconBell, IconHeart, IconUser, IconMessageCircle, IconCheck, IconX, IconMail, IconEyeOff } from "~/components/icons";
+import {
+  IconBell,
+  IconHeart,
+  IconUser,
+  IconMessageCircle,
+  IconCheck,
+  IconX,
+  IconMail,
+  IconImage,
+  IconRadio,
+} from "~/components/icons";
 import { useNotificationStore } from "~/stores/notification-store";
 import { useFollowStore } from "~/stores/follow-store";
 import { useAuthStore } from "~/stores/auth-store";
-import { staggerContainer, staggerItemVariants, fadeInUp } from "~/components/animations";
+import { staggerContainer, staggerItemVariants } from "~/components/animations";
 import { VerifiedBadge, OwnerBadge } from "~/components/badges";
 import type { Notification } from "~/types";
 
@@ -25,28 +35,43 @@ export function meta({}: Route.MetaArgs) {
 function getNotificationIcon(type: Notification["type"]) {
   switch (type) {
     case "question_received":
+    case "answer_posted":
+    case "comment":
+    case "post_comment":
       return IconMessageCircle;
     case "follow":
       return IconUser;
     case "like":
+    case "post_like":
       return IconHeart;
-    case "comment":
+    case "mention":
       return IconMessageCircle;
+    case "live_stream":
+      return IconRadio;
     default:
       return IconBell;
   }
 }
 
 function getNotificationLink(notification: Notification): string {
-  switch (notification.target_type) {
-    case "question":
-      return `/inbox`;
-    case "answer":
-      return `/`;
-    case "user":
+  switch (notification.type) {
+    case "question_received":
+      return "/inbox";
+    case "answer_posted":
+      return "/";
+    case "follow":
       return `/profile/${notification.actor?.username ?? notification.actor_id}`;
+    case "like":
+      return "/";
+    case "post_like":
+    case "post_comment":
+      return `/posts/${notification.target_id}`;
     case "comment":
-      return `/`;
+      return "/";
+    case "mention":
+      return "/";
+    case "live_stream":
+      return `/live/${notification.target_id}`;
     default:
       return "/notifications";
   }
@@ -66,24 +91,49 @@ function formatTimeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString();
 }
 
-type FilterTab = "all" | "questions" | "follows" | "likes";
+type FilterTab = "all" | "questions" | "follows" | "likes" | "posts" | "mentions";
 
 function filterNotifications(
   notifications: Notification[],
   tab: FilterTab
 ): Notification[] {
-  if (tab === "all") return notifications;
-  if (tab === "questions")
-    return notifications.filter(
-      (n) => n.type === "question_received" || n.type === "answer_posted"
-    );
-  if (tab === "follows")
-    return notifications.filter((n) => n.type === "follow");
-  if (tab === "likes")
-    return notifications.filter(
-      (n) => n.type === "like" || n.type === "comment"
-    );
-  return notifications;
+  switch (tab) {
+    case "all":
+      return notifications;
+    case "questions":
+      return notifications.filter(
+        (n) => n.type === "question_received" || n.type === "answer_posted"
+      );
+    case "follows":
+      return notifications.filter((n) => n.type === "follow");
+    case "likes":
+      return notifications.filter(
+        (n) => n.type === "like" || n.type === "post_like"
+      );
+    case "posts":
+      return notifications.filter(
+        (n) => n.type === "post_like" || n.type === "post_comment"
+      );
+    case "mentions":
+      return notifications.filter(
+        (n) => n.type === "mention" || n.type === "comment" || n.type === "post_comment"
+      );
+    default:
+      return notifications;
+  }
+}
+
+function countForTab(notifications: Notification[], tab: FilterTab): number {
+  return filterNotifications(notifications, tab).filter((n) => !n.is_read).length;
+}
+
+function TabBadge({ count }: { count: number }) {
+  if (count === 0) return null;
+  return (
+    <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full bg-foreground text-background">
+      {count > 99 ? "99+" : count}
+    </span>
+  );
 }
 
 function NotificationItem({
@@ -112,7 +162,7 @@ function NotificationItem({
         }}>
           <div className="relative flex-shrink-0 mt-0.5">
             <UserAvatar user={notification.actor} name={notification.actor?.display_name ?? "?"} size="sm" />
-            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-background flex items-center justify-center">
+            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-background flex items-center justify-center rounded-full">
               <Icon size={12} />
             </div>
           </div>
@@ -227,8 +277,11 @@ function FollowRequestCard({
 }
 
 export default function Notifications() {
-  const { notifications, unreadCount, markAsRead, markAsUnread, markAllAsRead, markAllAsUnread, deleteNotification, deleteAllNotifications, fetchNotifications } =
-    useNotificationStore();
+  const {
+    notifications, unreadCount,
+    markAsRead, markAsUnread, markAllAsRead, markAllAsUnread,
+    deleteNotification, deleteAllNotifications, fetchNotifications,
+  } = useNotificationStore();
   const { followRequests, fetchFollowRequests, acceptFollowRequest, rejectFollowRequest } =
     useFollowStore();
   const { user } = useAuthStore();
@@ -241,43 +294,17 @@ export default function Notifications() {
     }
   }, [user?.id]);
 
-  const handleRead = useCallback(
-    (id: string) => {
-      markAsRead(id);
-    },
-    [markAsRead]
-  );
+  const handleRead = useCallback((id: string) => markAsRead(id), [markAsRead]);
+  const handleUnread = useCallback((id: string) => markAsUnread(id), [markAsUnread]);
+  const handleDelete = useCallback((id: string) => deleteNotification(id), [deleteNotification]);
 
-  const handleUnread = useCallback(
-    (id: string) => {
-      markAsUnread(id);
-    },
-    [markAsUnread]
-  );
-
-  const handleMarkAllRead = () => {
-    if (user?.id) markAllAsRead(user.id);
-  };
-
-  const handleMarkAllUnread = () => {
-    if (user?.id) markAllAsUnread(user.id);
-  };
-
-  const handleDelete = useCallback(
-    (id: string) => {
-      deleteNotification(id);
-    },
-    [deleteNotification]
-  );
-
-  const handleDeleteAll = () => {
-    if (user?.id) deleteAllNotifications(user.id);
-  };
+  const handleMarkAllRead = () => { if (user?.id) markAllAsRead(user.id); };
+  const handleMarkAllUnread = () => { if (user?.id) markAllAsUnread(user.id); };
+  const handleDeleteAll = () => { if (user?.id) deleteAllNotifications(user.id); };
 
   const handleAcceptRequest = async (followId: string, followerId: string) => {
     if (user?.id) await acceptFollowRequest(followId, followerId, user.id);
   };
-
   const handleRejectRequest = async (followId: string) => {
     await rejectFollowRequest(followId);
   };
@@ -286,10 +313,9 @@ export default function Notifications() {
   const hasRequests = followRequests.length > 0 && user?.is_private;
 
   // When showing follow requests cards, filter out the "requested to follow you" notifications
-  // for those same users to avoid duplicates
   const requestFollowerIds = new Set(followRequests.map((r) => r.follower_id));
-  const displayFiltered = activeTab === 'follows' && hasRequests
-    ? filtered.filter((n) => !(n.message === 'requested to follow you' && requestFollowerIds.has(n.actor_id)))
+  const displayFiltered = activeTab === "follows" && hasRequests
+    ? filtered.filter((n) => !(n.message === "requested to follow you" && requestFollowerIds.has(n.actor_id)))
     : filtered;
 
   const allRead = notifications.length > 0 && unreadCount === 0;
@@ -340,24 +366,37 @@ export default function Notifications() {
           value={activeTab}
           onValueChange={(v) => setActiveTab(v as FilterTab)}
         >
-          <div className="px-4">
-            <TabsList className="w-full !h-11">
+          <div className="px-4 overflow-x-auto scrollbar-none">
+            <TabsList variant="line" className="w-full !h-11 min-w-max">
               <TabsTrigger value="all" className="flex-1 text-sm">
                 All
+                <TabBadge count={unreadCount} />
               </TabsTrigger>
               <TabsTrigger value="questions" className="flex-1 text-sm">
                 Questions
+                <TabBadge count={countForTab(notifications, "questions")} />
               </TabsTrigger>
-              <TabsTrigger value="follows" className="flex-1 text-sm relative">
+              <TabsTrigger value="follows" className="flex-1 text-sm">
                 Follows
-                {hasRequests && (
-                  <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold rounded-full bg-foreground text-background">
+                {hasRequests ? (
+                  <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full bg-foreground text-background">
                     {followRequests.length}
                   </span>
+                ) : (
+                  <TabBadge count={countForTab(notifications, "follows")} />
                 )}
               </TabsTrigger>
               <TabsTrigger value="likes" className="flex-1 text-sm">
                 Likes
+                <TabBadge count={countForTab(notifications, "likes")} />
+              </TabsTrigger>
+              <TabsTrigger value="posts" className="flex-1 text-sm">
+                Posts
+                <TabBadge count={countForTab(notifications, "posts")} />
+              </TabsTrigger>
+              <TabsTrigger value="mentions" className="flex-1 text-sm">
+                Comments
+                <TabBadge count={countForTab(notifications, "mentions")} />
               </TabsTrigger>
             </TabsList>
           </div>
@@ -397,9 +436,9 @@ export default function Notifications() {
 
               {displayFiltered.length === 0 && !(activeTab === "follows" && hasRequests) ? (
                 <EmptyState
-                  icon={IconBell}
-                  title="No notifications"
-                  description="When someone interacts with you, you'll see it here."
+                  icon={activeTab === "likes" ? IconHeart : activeTab === "posts" ? IconImage : activeTab === "follows" ? IconUser : activeTab === "questions" ? IconMessageCircle : IconBell}
+                  title={`No ${activeTab === "all" ? "" : activeTab + " "}notifications`}
+                  description={getEmptyDescription(activeTab)}
                 />
               ) : displayFiltered.length > 0 ? (
                 <motion.div
@@ -426,4 +465,21 @@ export default function Notifications() {
       </div>
     </AppShell>
   );
+}
+
+function getEmptyDescription(tab: FilterTab): string {
+  switch (tab) {
+    case "questions":
+      return "When someone asks you a question, you'll see it here.";
+    case "follows":
+      return "When someone follows you, you'll see it here.";
+    case "likes":
+      return "When someone likes your content, you'll see it here.";
+    case "posts":
+      return "When someone interacts with your posts, you'll see it here.";
+    case "mentions":
+      return "When someone comments on your content, you'll see it here.";
+    default:
+      return "When someone interacts with you, you'll see it here.";
+  }
 }
