@@ -155,6 +155,7 @@ export interface Channel {
   posts_count: number;
   created_at: string;
   is_subscribed?: boolean;
+  is_muted?: boolean;
   member_role?: 'owner' | 'admin' | 'member' | null;
 }
 
@@ -168,8 +169,12 @@ export interface ChannelPost {
   media_types: string[];
   views_count: number;
   reactions_count: number;
+  comments_count: number;
   is_pinned: boolean;
   posted_as: 'channel' | 'user';
+  edited_at: string | null;
+  scheduled_for: string | null;
+  is_draft: boolean;
   created_at: string;
   my_reaction?: string | null;
   reactions?: { emoji: string; count: number }[];
@@ -182,4 +187,26 @@ export interface ChannelMember {
   user?: User;
   role: 'owner' | 'admin' | 'member';
   joined_at: string;
+}
+
+export interface ChannelPostComment {
+  id: string;
+  post_id: string;
+  user_id: string;
+  user?: User;
+  content: string;
+  parent_id: string | null;
+  created_at: string;
+}
+
+export interface ChannelInvite {
+  id: string;
+  channel_id: string;
+  created_by: string;
+  code: string;
+  expires_at: string | null;
+  max_uses: number | null;
+  uses_count: number;
+  is_active: boolean;
+  created_at: string;
 }

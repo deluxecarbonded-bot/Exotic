@@ -19,6 +19,7 @@ export default [
       route(":handle", "routes/channels.$handle.tsx"),
     ]),
     route("owner-dashboard", "routes/owner-dashboard.tsx"),
+    route("channels/invite/:code", "routes/channels.invite.$code.tsx"),
   ]),
 
   route("api/resolve-username", "routes/api.resolve-username.ts"),

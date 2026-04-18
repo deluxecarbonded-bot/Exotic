@@ -518,3 +518,55 @@ export function IconMegaphone({ size = 24, strokeWidth = 2, ...props }: IconProp
     </svg>
   );
 }
+
+export function IconEye({ size = 24, strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <motion.svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </motion.svg>
+  );
+}
+
+export function IconBellOff({ size = 24, strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <motion.svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M13.73 21a2 2 0 01-3.46 0" />
+      <path d="M18.63 13A17.89 17.89 0 0118 8" />
+      <path d="M6.26 6.26A5.86 5.86 0 006 8c0 7-3 9-3 9h14" />
+      <path d="M18 8a6 6 0 00-9.33-5" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </motion.svg>
+  );
+}
+
+export function IconClock({ size = 24, strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <motion.svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </motion.svg>
+  );
+}
+
+export function IconShare2({ size = 24, strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <motion.svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+    </motion.svg>
+  );
+}
+
+export function IconUserMinus({ size = 24, strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <motion.svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+      <circle cx="8.5" cy="7" r="4" />
+      <line x1="23" y1="11" x2="17" y2="11" />
+    </motion.svg>
+  );
+}
