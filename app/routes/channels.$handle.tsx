@@ -618,7 +618,7 @@ export default function ChannelDetailPage() {
   const pinnedPost = posts.find(p => p.is_pinned);
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex h-full min-h-0 overflow-hidden">
       {/* ── Main column ── */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Header */}
