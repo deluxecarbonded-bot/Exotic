@@ -749,6 +749,11 @@ export default function LiveStreamPage() {
       { intent: "delete-stream" },
       { method: "post", action: `/live/${streamId}` },
     );
+    // Fallback: navigate after timeout in case fetcher doesn't complete
+    setTimeout(() => {
+      unsubscribe();
+      navigate("/live");
+    }, 3000);
   };
 
   return (
