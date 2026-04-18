@@ -11,6 +11,7 @@ export default [
     route("settings", "routes/settings.tsx"),
     route("search", "routes/search.tsx"),
     route("posts", "routes/posts.tsx"),
+    route("posts/:id", "routes/posts.$id.tsx"),
     route("live", "routes/live.tsx"),
     route("live/:streamId", "routes/live.$streamId.tsx"),
     route("channels", "routes/channels.tsx", [
