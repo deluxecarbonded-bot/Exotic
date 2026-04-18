@@ -79,6 +79,7 @@ export default function ResetPassword() {
             <p className="text-sm text-muted-foreground">Choose a new password</p>
           </div>
 
+          <div className="glass-auth-card space-y-6">
           <AnimatePresence mode="wait">
             {done ? (
               <motion.div
@@ -172,6 +173,7 @@ export default function ResetPassword() {
               </motion.div>
             )}
           </AnimatePresence>
+          </div>
         </div>
       </div>
     </div>

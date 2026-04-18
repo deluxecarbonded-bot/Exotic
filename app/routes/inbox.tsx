@@ -53,7 +53,7 @@ function AnswerForm({
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Write your answer..."
-          className="w-full min-h-[100px] resize-none rounded-lg bg-muted/50 p-3 text-sm placeholder:text-muted-foreground focus:outline-none"
+          className="w-full min-h-[100px] resize-none rounded-2xl bg-muted/50 p-4 text-sm placeholder:text-muted-foreground focus:outline-none"
           autoFocus
         />
         <div className="flex items-center justify-between">

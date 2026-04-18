@@ -151,6 +151,8 @@ export default function Register() {
                   </p>
                 </div>
 
+                <div className="glass-auth-card space-y-6">
+
                 {/* Auth Error */}
                 {error && (
                   <motion.div
@@ -354,6 +356,7 @@ export default function Register() {
               Sign in
             </Link>
           </p>
+                </div>
         </motion.div>
           )}
           </AnimatePresence>

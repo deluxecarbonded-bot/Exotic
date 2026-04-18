@@ -398,7 +398,7 @@ export default function AskUserPage() {
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     placeholder="Type your question..."
-                    className="w-full min-h-[160px] resize-none rounded-lg bg-muted/50 p-4 text-sm placeholder:text-muted-foreground focus:outline-none"
+                    className="w-full min-h-[160px] resize-none rounded-2xl bg-muted/50 p-4 text-sm placeholder:text-muted-foreground focus:outline-none"
                     autoFocus
                   />
                   <div className="absolute bottom-3 right-3">

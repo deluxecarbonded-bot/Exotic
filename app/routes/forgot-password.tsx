@@ -55,6 +55,7 @@ export default function ForgotPassword() {
             <p className="text-sm text-muted-foreground">Reset your password</p>
           </div>
 
+          <div className="glass-auth-card space-y-6">
           <AnimatePresence>
             {error && (
               <motion.div
@@ -96,6 +97,7 @@ export default function ForgotPassword() {
               Sign in
             </Link>
           </p>
+          </div>
         </div>
       </div>
     </div>

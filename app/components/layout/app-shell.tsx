@@ -25,7 +25,7 @@ import { type ReactNode } from 'react';
 
 export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
-  const { resolved, toggle } = useThemeStore();
+  const { resolved, toggle, liquidGlass } = useThemeStore();
   const { unreadCount } = useNotificationStore();
   const liveCount = useLiveStore((s) => s.liveCount);
   const { user } = useAuthStore();
@@ -69,7 +69,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                 to={item.path}
                 className={`relative flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
                   active
-                    ? 'bg-foreground text-background'
+                    ? liquidGlass
+                      ? 'glass-nav-active'
+                      : 'bg-foreground text-background'
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
               >
@@ -183,7 +185,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </main>
 
       {/* Mobile/Tablet Bottom Nav - hidden on desktop */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl glass-bottom-nav">
         <div className="flex items-center justify-around h-16 px-1">
           {navItems.map((item) => {
             const active = isActive(item.path);

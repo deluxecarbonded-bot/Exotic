@@ -101,7 +101,7 @@ export default function VerifyResetCode() {
             </p>
           </div>
 
-          <div className="space-y-6">
+          <div className="glass-auth-card space-y-6">
             <AnimatePresence>
               {error && (
                 <motion.div
@@ -127,7 +127,7 @@ export default function VerifyResetCode() {
                   value={digit}
                   onChange={(e) => handleChange(i, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(i, e)}
-                  className="w-14 h-16 text-center text-2xl font-bold uppercase rounded-xl border border-input bg-background focus:outline-none focus:ring-2 focus:ring-foreground transition-all caret-transparent"
+                  className="w-14 h-16 text-center text-2xl font-bold uppercase rounded-2xl border border-input bg-background focus:outline-none focus:ring-2 focus:ring-foreground transition-all caret-transparent"
                 />
               ))}
             </div>

@@ -355,7 +355,7 @@ function GoLiveDialog({
                 }}
                 placeholder="What's your stream about?"
                 maxLength={100}
-                className="w-full px-3 py-2 rounded-lg bg-muted text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:ring-1 focus:ring-foreground/20"
+                className="w-full px-4 py-2 rounded-full bg-muted text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:ring-1 focus:ring-foreground/20"
               />
             </div>
             <div>
@@ -368,7 +368,7 @@ function GoLiveDialog({
                 placeholder="Tell viewers what to expect..."
                 maxLength={300}
                 rows={3}
-                className="w-full px-3 py-2 rounded-lg bg-muted text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:ring-1 focus:ring-foreground/20 resize-none"
+                className="w-full px-4 py-2 rounded-2xl bg-muted text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:ring-1 focus:ring-foreground/20 resize-none"
               />
             </div>
             {error && (

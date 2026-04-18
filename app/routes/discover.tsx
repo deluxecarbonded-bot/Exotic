@@ -226,7 +226,7 @@ export default function DiscoverPage() {
         <div className="mb-8">
           <Link
             to="/search"
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-3 w-full px-4 py-3 rounded-full bg-muted text-muted-foreground hover:text-foreground transition-colors"
           >
             <IconSearch size={18} />
             <span className="text-sm">Search people, topics, questions...</span>

@@ -78,6 +78,8 @@ export default function Login() {
             </p>
           </div>
 
+          <div className="glass-auth-card space-y-6">
+
           {/* Auth Error */}
           {(error || urlError) && (
             <motion.div
@@ -171,6 +173,7 @@ export default function Login() {
               Sign up
             </Link>
           </p>
+          </div>
         </div>
       </div>
 

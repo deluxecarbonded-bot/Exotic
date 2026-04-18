@@ -175,7 +175,7 @@ function CreatePostForm({ onCreated }: { onCreated: () => void }) {
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
           placeholder="Write a caption..."
-          className="w-full resize-none rounded-lg bg-muted/50 p-3 text-sm placeholder:text-muted-foreground focus:outline-none min-h-[80px] mb-3"
+          className="w-full resize-none rounded-2xl bg-muted/50 p-4 text-sm placeholder:text-muted-foreground focus:outline-none min-h-[80px] mb-3"
           maxLength={2000}
         />
 

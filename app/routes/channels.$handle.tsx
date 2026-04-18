@@ -332,7 +332,7 @@ function PostComposer({ channel, user, onPosted }: {
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
           placeholder={`Message as ${postedAs === 'channel' ? channel.name : user.display_name}…`}
           rows={1}
-          className="flex-1 bg-muted rounded-2xl px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-foreground/20 max-h-28 min-h-[38px]"
+          className="flex-1 bg-muted rounded-full px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-foreground/20 max-h-28 min-h-[38px]"
           style={{ scrollbarWidth: 'none' }}
         />
         <motion.button whileTap={{ scale: 0.9 }} onClick={() => fileRef.current?.click()}

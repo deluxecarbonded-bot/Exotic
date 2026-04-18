@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '~/stores/auth-store';
 import { useChannelStore } from '~/stores/channel-store';
 import { IconMegaphone, IconSearch, IconX, IconGlobe, IconLock, IconPlus, IconArrowLeft } from '~/components/icons';
+import { Input } from '~/components/ui/input';
 import type { Channel } from '~/types';
 
 // ─── Shared helpers ────────────────────────────────────────────────────────────
@@ -80,11 +81,11 @@ function CreateChannelModal({ onClose, onCreated }: { onClose: () => void; onCre
           <div>
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Channel Name</label>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Exotic Updates" maxLength={64} required
-              className="w-full bg-muted rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20" />
+              className="w-full bg-muted rounded-full px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20" />
           </div>
           <div>
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Handle</label>
-            <div className="flex items-center bg-muted rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-foreground/20">
+            <div className="flex items-center bg-muted rounded-full overflow-hidden focus-within:ring-2 focus-within:ring-foreground/20">
               <span className="pl-4 text-sm text-muted-foreground select-none">@</span>
               <input value={handle} onChange={e => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 32))}
                 placeholder="channel_handle" maxLength={32} required
@@ -94,7 +95,7 @@ function CreateChannelModal({ onClose, onCreated }: { onClose: () => void; onCre
           <div>
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Description <span className="normal-case font-normal">(optional)</span></label>
             <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="What's this channel about?" maxLength={256} rows={2}
-              className="w-full bg-muted rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20 resize-none" />
+              className="w-full bg-muted rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20 resize-none" />
           </div>
           <div className="flex items-center justify-between p-4 bg-muted rounded-xl">
             <div className="flex items-center gap-3">
@@ -201,18 +202,20 @@ function ChannelsSidebar({ onCreateChannel }: { onCreateChannel: () => void }) {
       </div>
 
       {/* Search */}
-      <div className="px-3 pb-2 flex-shrink-0">
-        <div className="flex items-center gap-2 bg-muted rounded-xl px-3 h-9">
-          <IconSearch size={14} className="text-muted-foreground flex-shrink-0" />
-          <input
+      <div className="px-4 pb-2 flex-shrink-0">
+        <div className="relative">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+            <IconSearch size={16} />
+          </div>
+          <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search channels…"
-            className="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-muted-foreground/60"
+            className="pl-9 pr-9 h-9 bg-transparent"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="ghost-btn text-muted-foreground hover:text-foreground">
-              <IconX size={12} />
+            <button onClick={() => setSearch('')} className="ghost-btn absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+              <IconX size={14} />
             </button>
           )}
         </div>

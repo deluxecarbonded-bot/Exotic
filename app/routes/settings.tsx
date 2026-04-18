@@ -571,7 +571,7 @@ export default function Settings() {
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   placeholder="Tell people about yourself"
-                  className="w-full min-h-[100px] rounded-lg bg-input/20 px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30 resize-none dark:bg-input/30"
+                  className="w-full min-h-[100px] rounded-2xl bg-input/20 px-4 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30 resize-none dark:bg-input/30"
                   maxLength={160}
                 />
                 <span className="text-xs text-muted-foreground">
@@ -810,7 +810,7 @@ export default function Settings() {
             </div>
 
             {/* Liquid Glass */}
-            <div className="mt-4 flex items-center justify-between rounded-xl bg-muted/50 px-4 py-3">
+            <div className="mt-4 flex items-center justify-between rounded-full bg-muted/50 px-4 py-3">
               <div>
                 <p className="text-sm font-medium">Liquid Glass</p>
                 <p className="text-xs text-muted-foreground mt-0.5">

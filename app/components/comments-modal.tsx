@@ -323,7 +323,7 @@ export function CommentsModal({
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="flex items-center justify-between mb-2 px-3 py-1.5 bg-muted rounded-lg"
+                  className="flex items-center justify-between mb-2 px-3 py-1.5 bg-muted rounded-full"
                 >
                   <span className="text-xs text-muted-foreground">
                     Replying to <span className="font-semibold text-foreground">@{replyTo.username}</span>
@@ -335,9 +335,9 @@ export function CommentsModal({
               )}
             </AnimatePresence>
 
-            <div className="flex items-end gap-2">
+            <div className="flex items-end gap-2.5">
               <UserAvatar user={user as any} size="xs" />
-              <div className="flex-1 flex items-end gap-2 bg-muted rounded-2xl px-3 py-2">
+              <div className="flex-1 flex items-end gap-2 border border-input rounded-full px-4 py-2.5 min-h-[38px] bg-input/20 focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30 transition-colors">
                 <textarea
                   ref={inputRef}
                   value={text}
