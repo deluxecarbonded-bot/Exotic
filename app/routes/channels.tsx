@@ -278,7 +278,7 @@ export default function ChannelsLayout() {
      *   mobile  → top:56px (h-14 header), bottom:64px (h-16 bottom nav)
      *   desktop → top:0, bottom:32px (pb-8), left:256px (pl-64 sidebar)
      */
-    <div className="fixed top-14 bottom-16 left-0 right-0 lg:top-0 lg:bottom-8 lg:left-64 flex overflow-hidden bg-background">
+    <div className="fixed inset-0 z-40 flex overflow-hidden bg-background">
       {/* Left sidebar — visible on md+ always; on mobile only when no channel selected */}
       <div className={`${params.handle ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-72 lg:w-80 flex-shrink-0 overflow-hidden`}>
         <ChannelsSidebar onCreateChannel={() => setShowCreate(true)} />
