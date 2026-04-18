@@ -245,49 +245,34 @@ function PostComposer({ channel, user, onPosted }: {
 
   return (
     <div className="border-t border-border bg-background">
-      {/* Media previews */}
-      <AnimatePresence>
-        {previews.length > 0 && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-            className="flex gap-2 px-4 pt-2 overflow-x-auto">
-            {previews.map((p, i) => (
-              <div key={i} className="relative flex-shrink-0">
-                <img src={p} alt="" className="w-14 h-14 object-cover rounded-xl" />
-                <button onClick={() => removeFile(i)} className="ghost-btn absolute -top-1.5 -right-1.5 bg-background border border-border rounded-full w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground">
-                  <IconX size={10} />
-                </button>
-              </div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Single-row bar: identity | textarea | image | send */}
-      <div className="flex items-end gap-2 px-3 py-2.5">
-        {/* Identity avatar button */}
-        <div className="relative flex-shrink-0 self-end pb-0.5">
+      {/* Post as selector strip */}
+      <div className="px-4 pt-2.5 pb-1">
+        <div className="relative inline-block">
           <button
             onClick={() => setShowIdentityPicker(v => !v)}
-            className="ghost-btn hover:opacity-70 transition-opacity"
-            title={`Posting as ${postedAs === 'channel' ? channel.name : user.display_name}`}
+            className="ghost-btn flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             {postedAs === 'channel'
-              ? <ChannelAvatar channel={channel} size={30} />
+              ? <ChannelAvatar channel={channel} size={18} />
               : user.avatar_url
-                ? <img src={user.avatar_url} className="w-[30px] h-[30px] rounded-full object-cover" alt="" />
-                : <div className="w-[30px] h-[30px] rounded-full bg-muted flex items-center justify-center text-xs font-bold">{user.display_name?.[0]}</div>
+                ? <img src={user.avatar_url} className="w-[18px] h-[18px] rounded-full object-cover" alt="" />
+                : <div className="w-[18px] h-[18px] rounded-full bg-muted flex items-center justify-center text-[9px] font-bold">{user.display_name?.[0]}</div>
             }
+            <span>Post as <span className="font-semibold text-foreground">{postedAs === 'channel' ? channel.name : user.display_name}</span></span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
           </button>
 
           <AnimatePresence>
             {showIdentityPicker && (
               <>
-                <div className="fixed inset-0 z-[9]" onClick={() => setShowIdentityPicker(false)} />
+                <div className="fixed inset-0 z-[49]" onClick={() => setShowIdentityPicker(false)} />
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: 4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: 4 }}
-                  className="absolute bottom-10 left-0 z-10 w-52 bg-background border border-border rounded-2xl overflow-hidden shadow-xl"
+                  className="absolute bottom-7 left-0 z-[50] w-52 bg-background border border-border rounded-2xl overflow-hidden shadow-xl"
                 >
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide px-4 pt-3 pb-1">Post as</p>
                   <button
@@ -320,25 +305,40 @@ function PostComposer({ channel, user, onPosted }: {
             )}
           </AnimatePresence>
         </div>
+      </div>
 
-        {/* Textarea */}
+      {/* Media previews */}
+      <AnimatePresence>
+        {previews.length > 0 && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+            className="flex gap-2 px-4 pb-1 overflow-x-auto">
+            {previews.map((p, i) => (
+              <div key={i} className="relative flex-shrink-0">
+                <img src={p} alt="" className="w-14 h-14 object-cover rounded-xl" />
+                <button onClick={() => removeFile(i)} className="ghost-btn absolute -top-1.5 -right-1.5 bg-background border border-border rounded-full w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground">
+                  <IconX size={10} />
+                </button>
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Input row */}
+      <div className="flex items-end gap-2 px-3 pb-3">
         <textarea
           value={text}
           onChange={e => setText(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
-          placeholder={`Message ${postedAs === 'channel' ? channel.name : user.display_name}…`}
+          placeholder={`Message as ${postedAs === 'channel' ? channel.name : user.display_name}…`}
           rows={1}
           className="flex-1 bg-muted rounded-2xl px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-foreground/20 max-h-28 min-h-[38px]"
           style={{ scrollbarWidth: 'none' }}
         />
-
-        {/* Image attach */}
         <motion.button whileTap={{ scale: 0.9 }} onClick={() => fileRef.current?.click()}
           className="ghost-btn w-9 h-9 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 self-end">
           <IconImage size={18} />
         </motion.button>
-
-        {/* Send */}
         <motion.button whileTap={{ scale: 0.9 }} onClick={handleSubmit}
           disabled={(!text.trim() && files.length === 0) || submitting}
           className="w-9 h-9 flex items-center justify-center rounded-full bg-foreground text-background disabled:opacity-40 transition-opacity flex-shrink-0 self-end">
