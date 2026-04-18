@@ -344,7 +344,7 @@ export function PostCard({ post }: { post: Post }) {
     setHidden(true);
   };
 
-  const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/profile/${post.user?.username}`;
+  const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(postUrl).catch(() => {
