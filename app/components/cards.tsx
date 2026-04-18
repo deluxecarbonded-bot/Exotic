@@ -1,12 +1,14 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router';
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { IconHeart, IconMessageCircle, IconShare, IconMoreHorizontal, IconTrash, IconEyeOff, IconCopy, IconPlay, IconCheck } from '~/components/icons';
 import { heartBeat, fadeInUp, staggerItem, staggerItemVariants } from '~/components/animations';
 import { useQuestionStore } from '~/stores/question-store';
 import { usePostStore } from '~/stores/post-store';
 import { useFollowStore } from '~/stores/follow-store';
 import { useAuthStore } from '~/stores/auth-store';
+import { useToastStore } from '~/stores/toast-store';
+import { useIsViewMode, LoginPromptModal } from '~/components/view-mode';
 import { UserAvatar, AnonAvatar } from '~/components/user-avatar';
 import { VerifiedBadge, OwnerBadge } from '~/components/badges';
 import { parseMediaType } from '~/components/media-editor';
@@ -14,12 +16,30 @@ import { CommentsModal } from '~/components/comments-modal';
 import { ShareModal } from '~/components/share-modal';
 import type { Answer, Question, User, Post } from '~/types';
 
+/** Hook that returns a gated action — shows login prompt if in view mode, otherwise runs the action */
+function useGatedAction() {
+  const isViewMode = useIsViewMode();
+  const [showPrompt, setShowPrompt] = useState(false);
+
+  const gate = useCallback(<T extends (...args: any[]) => any>(action: T) => {
+    if (isViewMode) {
+      return ((..._args: any[]) => setShowPrompt(true)) as unknown as T;
+    }
+    return action;
+  }, [isViewMode]);
+
+  const promptEl = showPrompt ? <LoginPromptModal onClose={() => setShowPrompt(false)} /> : null;
+
+  return { gate, promptEl, isViewMode };
+}
+
 function CopyLinkButton({ url, onDone }: { url: string; onDone: () => void }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(url);
     setCopied(true);
+    useToastStore.getState().addToast('Link copied to clipboard', 'success');
     setTimeout(() => {
       setCopied(false);
       onDone();
@@ -40,18 +60,19 @@ function CopyLinkButton({ url, onDone }: { url: string; onDone: () => void }) {
 export function AnswerCard({ answer }: { answer: Answer }) {
   const { user } = useAuthStore();
   const { toggleLike, deleteAnswer } = useQuestionStore();
+  const { gate, promptEl } = useGatedAction();
   const [liked, setLiked] = useState(answer.is_liked);
   const [likesCount, setLikesCount] = useState(answer.likes_count);
   const [showMenu, setShowMenu] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const handleLike = async () => {
+  const handleLike = gate(async () => {
     if (!user?.id) return;
     setLiked(!liked);
     setLikesCount(liked ? likesCount - 1 : likesCount + 1);
     await toggleLike(answer.id, user.id);
-  };
+  });
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -66,7 +87,7 @@ export function AnswerCard({ answer }: { answer: Answer }) {
 
   const answerUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/profile/${answer.user?.username}`;
 
-  const handleShare = async () => {
+  const handleShare = gate(async () => {
     try {
       if (navigator.share) {
         await navigator.share({
@@ -75,15 +96,18 @@ export function AnswerCard({ answer }: { answer: Answer }) {
         });
       } else {
         navigator.clipboard.writeText(answerUrl);
+        useToastStore.getState().addToast('Link copied to clipboard', 'success');
       }
     } catch {}
-  };
+  });
 
   const isOwner = user?.id === answer.user_id;
 
   if (hidden || deleting) return null;
 
   return (
+    <>
+    {promptEl}
     <motion.article
       className="p-4 sm:p-6"
       variants={staggerItemVariants}
@@ -190,6 +214,7 @@ export function AnswerCard({ answer }: { answer: Answer }) {
         </div>
       </div>
     </motion.article>
+    </>
   );
 }
 
@@ -248,17 +273,20 @@ export function QuestionCard({ question, onAnswer, onDelete }: { question: Quest
 export function UserCard({ user, onFollow }: { user: User; onFollow?: (id: string) => void }) {
   const { user: authUser } = useAuthStore();
   const { isFollowing: checkIsFollowing, isRequested: checkIsRequested, toggleFollow } = useFollowStore();
+  const { gate, promptEl } = useGatedAction();
   const isFollowing = checkIsFollowing(user.id);
   const isRequested = checkIsRequested(user.id);
   const isSelf = authUser?.id === user.id;
 
-  const handleFollow = async () => {
+  const handleFollow = gate(async () => {
     if (!authUser) return;
     await toggleFollow(user.id, authUser.id, user.is_private);
     onFollow?.(user.id);
-  };
+  });
 
   return (
+    <>
+    {promptEl}
     <motion.div
       className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors"
       variants={staggerItemVariants}
@@ -289,12 +317,14 @@ export function UserCard({ user, onFollow }: { user: User; onFollow?: (id: strin
         </motion.button>
       )}
     </motion.div>
+    </>
   );
 }
 
 export function PostCard({ post }: { post: Post }) {
   const { user } = useAuthStore();
   const { toggleLike, deletePost } = usePostStore();
+  const { gate, promptEl } = useGatedAction();
   const [liked, setLiked] = useState(post.is_liked);
   const [likesCount, setLikesCount] = useState(post.likes_count);
   const [commentsCount, setCommentsCount] = useState(post.comments_count);
@@ -308,18 +338,17 @@ export function PostCard({ post }: { post: Post }) {
   const [doubleTapHeart, setDoubleTapHeart] = useState(false);
   const lastTapRef = useRef<number>(0);
 
-  const handleLike = async () => {
+  const handleLike = gate(async () => {
     if (!user?.id) return;
     setLiked(!liked);
     setLikesCount(liked ? likesCount - 1 : likesCount + 1);
     await toggleLike(post.id, user.id);
-  };
+  });
 
-  const handleDoubleTap = async () => {
+  const handleDoubleTap = gate(async () => {
     if (!user?.id) return;
     const now = Date.now();
     if (now - lastTapRef.current < 300) {
-      // Double tap — like if not already liked
       if (!liked) {
         setLiked(true);
         setLikesCount(c => c + 1);
@@ -331,7 +360,7 @@ export function PostCard({ post }: { post: Post }) {
     } else {
       lastTapRef.current = now;
     }
-  };
+  });
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -355,6 +384,7 @@ export function PostCard({ post }: { post: Post }) {
       document.execCommand('copy');
       document.body.removeChild(el);
     });
+    useToastStore.getState().addToast('Link copied to clipboard', 'success');
     setCopyDone(true);
     setTimeout(() => { setCopyDone(false); setShowMenu(false); }, 1200);
   };
@@ -379,6 +409,7 @@ export function PostCard({ post }: { post: Post }) {
 
   return (
     <>
+      {promptEl}
       <CommentsModal
         open={showComments}
         onClose={() => setShowComments(false)}
@@ -497,7 +528,7 @@ export function PostCard({ post }: { post: Post }) {
           {/* Comments */}
           <button
             className="ghost-btn flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors p-0"
-            onClick={() => setShowComments(true)}
+            onClick={gate(() => setShowComments(true))}
             style={{ background: 'none', border: 'none', boxShadow: 'none', backdropFilter: 'none' }}
           >
             <IconMessageCircle size={17} />
@@ -507,7 +538,7 @@ export function PostCard({ post }: { post: Post }) {
           {/* Share */}
           <button
             className="ghost-btn flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors p-0"
-            onClick={() => setShowShare(true)}
+            onClick={gate(() => setShowShare(true))}
             style={{ background: 'none', border: 'none', boxShadow: 'none', backdropFilter: 'none' }}
           >
             <IconShare size={17} />

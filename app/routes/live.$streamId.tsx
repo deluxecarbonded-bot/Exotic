@@ -21,6 +21,7 @@ import {
 } from "~/components/icons";
 import { useLiveStore } from "~/stores/live-store";
 import { useAuthStore } from "~/stores/auth-store";
+import { useToastStore } from "~/stores/toast-store";
 import { useWebRTCHost, useWebRTCViewer } from "~/hooks/use-webrtc";
 import { useMediaDevices } from "~/hooks/use-media-devices";
 import type { LiveMessage, MediaSourceType } from "~/types";
@@ -74,6 +75,7 @@ function RtmpHostPanel({ stream }: { stream: any }) {
   const copy = async (text: string, setFlag: (v: boolean) => void) => {
     await navigator.clipboard.writeText(text);
     setFlag(true);
+    useToastStore.getState().addToast('Copied to clipboard', 'success');
     setTimeout(() => setFlag(false), 2000);
   };
 

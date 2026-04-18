@@ -69,11 +69,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 import { AuthProvider } from '~/components/auth-provider';
+import { ToastContainer } from '~/components/toast';
 
 export default function App() {
   return (
     <AuthProvider>
       <Outlet />
+      <ToastContainer />
     </AuthProvider>
   );
 }

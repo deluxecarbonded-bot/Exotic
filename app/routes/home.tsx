@@ -12,6 +12,7 @@ import { useQuestionStore } from "~/stores/question-store";
 import { usePostStore } from "~/stores/post-store";
 import { useFollowStore } from "~/stores/follow-store";
 import { useLiveStore } from "~/stores/live-store";
+import { useIsViewMode } from "~/components/view-mode";
 import type { Answer, Post } from "~/types";
 
 export function meta({}: Route.MetaArgs) {
@@ -97,6 +98,7 @@ function MixedFeedList({ answers, posts, username }: { answers: Answer[]; posts:
 
 export default function HomePage() {
   const { user } = useAuthStore();
+  const isViewMode = useIsViewMode();
   const { feed, isLoading, fetchFeed, checkLikes, subscribeRealtime: subscribeQuestions, unsubscribe: unsubscribeQuestions } = useQuestionStore();
   const { posts, isLoading: postsLoading, fetchPosts, checkLikes: checkPostLikes, subscribeRealtime: subscribePosts, unsubscribe: unsubscribePosts } = usePostStore();
   const { following, fetchFollowing } = useFollowStore();
@@ -104,6 +106,17 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState("for-you");
 
   useEffect(() => {
+    if (isViewMode) {
+      // View mode: fetch all public content without user context
+      fetchFeed();
+      fetchPosts();
+      subscribePosts();
+      subscribeQuestions();
+      return () => {
+        unsubscribePosts();
+        unsubscribeQuestions();
+      };
+    }
     if (!user?.id) return;
     fetchFollowing(user.id).then(() => {
       const followedIds = Array.from(useFollowStore.getState().following);
@@ -117,7 +130,7 @@ export default function HomePage() {
       unsubscribePosts();
       unsubscribeQuestions();
     };
-  }, [user?.id]);
+  }, [user?.id, isViewMode]);
 
   const forYouAnswers = useMemo(() => feed, [feed]);
   const forYouPosts = useMemo(() => posts, [posts]);
@@ -203,7 +216,6 @@ export default function HomePage() {
           </Tabs>
         </div>
       </div>
-
     </AppShell>
   );
 }

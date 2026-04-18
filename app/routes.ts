@@ -1,17 +1,13 @@
 import { type RouteConfig, index, route, layout } from "@react-router/dev/routes";
 
 export default [
-  // Protected routes (require authentication)
+  // Strictly protected routes (require authentication, no view mode)
   layout("routes/protected-layout.tsx", [
-    index("routes/home.tsx"),
     route("inbox", "routes/inbox.tsx"),
     route("profile/:username", "routes/profile.$username.tsx"),
-    route("discover", "routes/discover.tsx"),
     route("notifications", "routes/notifications.tsx"),
     route("settings", "routes/settings.tsx"),
     route("search", "routes/search.tsx"),
-    route("posts", "routes/posts.tsx"),
-    route("posts/:id", "routes/posts.$id.tsx"),
     route("live", "routes/live.tsx"),
     route("live/:streamId", "routes/live.$streamId.tsx"),
     route("channels", "routes/channels.tsx", [
@@ -20,6 +16,14 @@ export default [
     ]),
     route("owner-dashboard", "routes/owner-dashboard.tsx"),
     route("channels/invite/:code", "routes/channels.invite.$code.tsx"),
+  ]),
+
+  // View-mode routes (signed-out users can browse read-only)
+  layout("routes/viewable-layout.tsx", [
+    index("routes/home.tsx"),
+    route("discover", "routes/discover.tsx"),
+    route("posts", "routes/posts.tsx"),
+    route("posts/:id", "routes/posts.$id.tsx"),
   ]),
 
   route("api/resolve-username", "routes/api.resolve-username.ts"),

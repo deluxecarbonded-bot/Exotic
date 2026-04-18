@@ -420,7 +420,7 @@ export const useChannelStore = create<ChannelState>((set, get) => ({
   },
 
   revokeInviteLink: async (inviteId) => {
-    await supabase.from('channel_invites').update({ is_active: false }).eq('id', inviteId);
+    await supabase.from('channel_invites').delete().eq('id', inviteId);
   },
 
   joinViaInvite: async (code, userId) => {

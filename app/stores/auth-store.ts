@@ -5,6 +5,7 @@ import type { User } from '~/types';
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
+  isViewMode: boolean;
   isLoading: boolean;
   error: string | null;
   setUser: (user: User | null) => void;
@@ -55,6 +56,7 @@ function trackSession(userId: string) {
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
+  isViewMode: false,
   isLoading: true,
   error: null,
 
@@ -67,22 +69,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         const profile = await fetchProfile(session.user.id);
-        set({ user: profile, isAuthenticated: !!profile, isLoading: false });
+        set({ user: profile, isAuthenticated: !!profile, isViewMode: false, isLoading: false });
         if (profile) trackSession(profile.id);
       } else {
-        set({ isLoading: false });
+        set({ isViewMode: true, isLoading: false });
       }
 
       supabase.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
           const profile = await fetchProfile(session.user.id);
-          set({ user: profile, isAuthenticated: !!profile });
+          set({ user: profile, isAuthenticated: !!profile, isViewMode: false });
         } else if (event === 'SIGNED_OUT') {
-          set({ user: null, isAuthenticated: false });
+          set({ user: null, isAuthenticated: false, isViewMode: true });
         }
       });
     } catch {
-      set({ isLoading: false });
+      set({ isViewMode: true, isLoading: false });
     }
   },
 

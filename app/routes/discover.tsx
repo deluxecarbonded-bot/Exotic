@@ -17,6 +17,7 @@ import { useFollowStore } from "~/stores/follow-store";
 import { usePostStore } from "~/stores/post-store";
 import { useAuthStore } from "~/stores/auth-store";
 import { useLiveStore } from "~/stores/live-store";
+import { useIsViewMode } from "~/components/view-mode";
 import { supabase } from "~/lib/supabase";
 import { VerifiedBadge, OwnerBadge } from "~/components/badges";
 import type { User, Post } from "~/types";
@@ -140,6 +141,7 @@ export function meta({}: Route.MetaArgs) {
 
 export default function DiscoverPage() {
   const { user } = useAuthStore();
+  const isViewMode = useIsViewMode();
   const { following } = useFollowStore();
   const { fetchDiscoverPosts } = usePostStore();
   const { streams } = useLiveStore();

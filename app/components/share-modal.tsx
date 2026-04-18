@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IconCopy, IconCheck, IconX } from "~/components/icons";
+import { useToastStore } from "~/stores/toast-store";
 
 // ─── Custom brand SVG icons ────────────────────────────────────────────────────
 function WhatsAppIcon() {
@@ -143,6 +144,15 @@ export function ShareModal({
 }) {
   const [copied, setCopied] = useState(false);
 
+  useEffect(() => {
+    if (open) {
+      document.body.classList.add('share-sheet-open');
+    } else {
+      document.body.classList.remove('share-sheet-open');
+    }
+    return () => document.body.classList.remove('share-sheet-open');
+  }, [open]);
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(url);
@@ -155,6 +165,7 @@ export function ShareModal({
       document.body.removeChild(el);
     }
     setCopied(true);
+    useToastStore.getState().addToast('Link copied to clipboard', 'success');
     setTimeout(() => setCopied(false), 2000);
   };
 

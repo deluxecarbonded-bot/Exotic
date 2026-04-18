@@ -58,6 +58,8 @@ function CodeBlockPre({ children }: { children?: React.ReactNode }) {
   const handleCopy = useCallback(async () => {
     await navigator.clipboard.writeText(codeString);
     setCopied(true);
+    const { useToastStore } = await import('~/stores/toast-store');
+    useToastStore.getState().addToast('Code copied to clipboard', 'success');
     setTimeout(() => setCopied(false), 2000);
   }, [codeString]);
 

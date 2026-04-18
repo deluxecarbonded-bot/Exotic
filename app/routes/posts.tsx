@@ -7,6 +7,7 @@ import { IconImage, IconX, IconCamera, IconPlay, IconEdit } from "~/components/i
 import { useAuthStore } from "~/stores/auth-store";
 import { usePostStore } from "~/stores/post-store";
 import { useFollowStore } from "~/stores/follow-store";
+import { useIsViewMode } from "~/components/view-mode";
 import { fadeInUp } from "~/components/animations";
 import { MediaEditorModal, applyEditsToImage, encodeVideoType, defaultEdit, type MediaEdit } from "~/components/media-editor";
 
@@ -238,10 +239,16 @@ function CreatePostForm({ onCreated }: { onCreated: () => void }) {
 
 export default function PostsPage() {
   const { user } = useAuthStore();
+  const isViewMode = useIsViewMode();
   const { posts, isLoading, fetchPosts, checkLikes, subscribeRealtime, unsubscribe } = usePostStore();
   const { following, fetchFollowing } = useFollowStore();
 
   useEffect(() => {
+    if (isViewMode) {
+      fetchPosts();
+      subscribeRealtime();
+      return () => unsubscribe();
+    }
     if (!user?.id) return;
     fetchFollowing(user.id).then(() => {
       const followedIds = Array.from(useFollowStore.getState().following);
@@ -251,7 +258,7 @@ export default function PostsPage() {
     });
     subscribeRealtime();
     return () => unsubscribe();
-  }, [user?.id]);
+  }, [user?.id, isViewMode]);
 
   const handleRefresh = () => {
     if (!user?.id) return;
@@ -268,7 +275,7 @@ export default function PostsPage() {
           <h1 className="text-xl font-bold">Posts</h1>
         </div>
 
-        <CreatePostForm onCreated={handleRefresh} />
+        {!isViewMode && <CreatePostForm onCreated={handleRefresh} />}
 
         <AnimatePresence mode="wait">
           {isLoading ? (

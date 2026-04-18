@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '~/stores/auth-store';
 import { useChannelStore } from '~/stores/channel-store';
+import { useToastStore } from '~/stores/toast-store';
 import { supabase } from '~/lib/supabase';
 import { parseMediaType } from '~/components/media-editor';
 import {
@@ -302,6 +303,7 @@ function ChannelPostCard({ post, channel, canAdmin, currentUserId, onDelete, onP
   const handleShare = () => {
     onShare(post.id);
     setCopied(true);
+    useToastStore.getState().addToast('Link copied to clipboard', 'success');
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -754,12 +756,14 @@ function InviteLinkModal({ channel, onClose }: { channel: Channel; onClose: () =
   const handleCopy = (code: string) => {
     navigator.clipboard.writeText(`${window.location.origin}/channels/invite/${code}`);
     setCopied(code);
+    useToastStore.getState().addToast('Invite link copied', 'success');
     setTimeout(() => setCopied(''), 2000);
   };
 
   const handleRevoke = async (id: string) => {
     await revokeInviteLink(id);
     setInvites(prev => prev.filter(i => i.id !== id));
+    useToastStore.getState().addToast('Invite link deleted', 'success');
   };
 
   return (
@@ -1231,6 +1235,7 @@ export default function ChannelDetailPage() {
   const handleSharePost = (postId: string) => {
     const url = `${window.location.origin}/channels/${handle}#post-${postId}`;
     navigator.clipboard.writeText(url);
+    useToastStore.getState().addToast('Link copied to clipboard', 'success');
   };
 
   const handleReact = async (postId: string, emoji: string) => {
