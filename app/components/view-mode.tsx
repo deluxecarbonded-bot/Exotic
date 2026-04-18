@@ -96,23 +96,3 @@ export function LoginPromptModal({ onClose }: { onClose: () => void }) {
     </>
   );
 }
-
-/** Fixed bottom banner for view mode pages */
-export function ViewModeBanner() {
-  const isViewMode = useIsViewMode();
-  if (!isViewMode) return null;
-
-  return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-foreground text-background px-4 py-3 text-center safe-area-bottom">
-      <div className="flex items-center justify-center gap-3 max-w-md mx-auto">
-        <p className="text-xs font-medium">Sign in to interact</p>
-        <Link
-          to="/login"
-          className="px-4 py-1.5 bg-background text-foreground rounded-full text-xs font-semibold hover:opacity-90 transition-opacity"
-        >
-          Sign In
-        </Link>
-      </div>
-    </div>
-  );
-}
