@@ -3,7 +3,7 @@ import { Outlet, Link, useParams, useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '~/stores/auth-store';
 import { useChannelStore } from '~/stores/channel-store';
-import { IconMegaphone, IconSearch, IconX, IconGlobe, IconLock, IconCheck, IconPlus } from '~/components/icons';
+import { IconMegaphone, IconSearch, IconX, IconGlobe, IconLock, IconPlus, IconArrowLeft } from '~/components/icons';
 import type { Channel } from '~/types';
 
 // ─── Shared helpers ────────────────────────────────────────────────────────────
@@ -189,10 +189,13 @@ function ChannelsSidebar({ onCreateChannel }: { onCreateChannel: () => void }) {
   return (
     <div className="flex flex-col h-full border-r border-border bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-2 flex-shrink-0">
-        <h1 className="font-bold text-lg">Channels</h1>
+      <div className="flex items-center gap-2 px-3 pt-4 pb-2 flex-shrink-0">
+        <Link to="/" className="ghost-btn w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground flex-shrink-0">
+          <IconArrowLeft size={18} />
+        </Link>
+        <h1 className="font-bold text-lg flex-1">Channels</h1>
         <motion.button whileTap={{ scale: 0.9 }} onClick={onCreateChannel}
-          className="w-8 h-8 flex items-center justify-center rounded-full bg-foreground text-background hover:opacity-90 transition-opacity">
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-foreground text-background hover:opacity-90 transition-opacity flex-shrink-0">
           <IconPlus size={16} />
         </motion.button>
       </div>
