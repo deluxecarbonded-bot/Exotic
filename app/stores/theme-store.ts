@@ -25,7 +25,10 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   resolved: typeof window !== 'undefined'
     ? resolveTheme((localStorage.getItem('exotic-theme') as ThemeMode) || 'light')
     : 'light',
-  liquidGlass: typeof window !== 'undefined' ? localStorage.getItem('exotic-liquid-glass') === '1' : false,
+  liquidGlass: typeof window !== 'undefined'
+    ? localStorage.getItem('exotic-liquid-glass') === '1'
+      && (() => { try { const p = JSON.parse(localStorage.getItem('exotic-plugins') ?? '[]'); return p.includes('exotic-glass'); } catch { return false; } })()
+    : false,
 
   setMode: (mode) => {
     const resolved = resolveTheme(mode);

@@ -52,7 +52,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 }
                 if (theme === 'dark') document.documentElement.classList.add('dark');
                 if (localStorage.getItem('exotic-liquid-glass') === '1') {
-                  document.documentElement.classList.add('liquid-glass');
+                  try { var p = JSON.parse(localStorage.getItem('exotic-plugins') || '[]');
+                    if (p.indexOf('exotic-glass') !== -1) document.documentElement.classList.add('liquid-glass');
+                  } catch(e2) {}
                 }
               } catch(e) {}
             })();
