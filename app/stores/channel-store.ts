@@ -291,10 +291,7 @@ export const useChannelStore = create<ChannelState>((set, get) => ({
   },
 
   recordView: async (postId) => {
-    await supabase.rpc('increment_post_views', { pid: postId }).catch(() => {
-      // Fallback: direct update if RPC doesn't exist yet
-      supabase.from('channel_posts').update({ views_count: supabase.rpc ? undefined : 0 }).eq('id', postId).catch(() => {});
-    });
+    await supabase.rpc('increment_post_views', { p_post_id: postId }).catch(() => {});
   },
 
   // ─── Scheduled Posts ──────────────────────────────────────────────────────────
@@ -338,7 +335,7 @@ export const useChannelStore = create<ChannelState>((set, get) => ({
     if (error || !data) return null;
 
     // Increment comments_count
-    await supabase.rpc('increment_channel_post_comments', { pid: postId }).catch(() => {});
+    await supabase.rpc('increment_channel_post_comments', { p_post_id: postId }).catch(() => {});
 
     return data as ChannelPostComment;
   },
@@ -354,7 +351,7 @@ export const useChannelStore = create<ChannelState>((set, get) => ({
     await supabase.from('channel_post_comments').delete().eq('id', commentId);
 
     if (comment?.post_id) {
-      await supabase.rpc('decrement_channel_post_comments', { pid: comment.post_id }).catch(() => {});
+      await supabase.rpc('decrement_channel_post_comments', { p_post_id: comment.post_id }).catch(() => {});
     }
   },
 

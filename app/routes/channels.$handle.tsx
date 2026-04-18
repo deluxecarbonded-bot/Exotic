@@ -1326,8 +1326,8 @@ export default function ChannelDetailPage() {
                 </button>
               )}
 
-              {/* Invite link - for owner/admin of private channels */}
-              {canAdmin && !channel.is_public && (
+              {/* Invite link - for owner/admin of any channel */}
+              {canAdmin && (
                 <button onClick={() => setShowInviteLinks(true)}
                   className="ghost-btn p-1.5 text-muted-foreground hover:text-foreground transition-colors"
                   style={{ background: 'none', border: 'none', boxShadow: 'none', backdropFilter: 'none' }}
