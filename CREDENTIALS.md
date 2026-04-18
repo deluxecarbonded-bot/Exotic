@@ -1,0 +1,3 @@
+# Git credentials — used to push/pull from GitHub
+GITHUB_TOKEN=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
+GITHUB_REMOTE=https://deluxecarbonded-bot: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@github.com/deluxecarbonded-bot/Exotic.git
