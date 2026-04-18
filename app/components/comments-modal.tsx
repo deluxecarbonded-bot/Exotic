@@ -328,16 +328,16 @@ export function CommentsModal({
                   <span className="text-xs text-muted-foreground">
                     Replying to <span className="font-semibold text-foreground">@{replyTo.username}</span>
                   </span>
-                  <button onClick={clearReply} className="text-muted-foreground hover:text-foreground">
+                  <button onClick={clearReply} className="text-muted-foreground hover:text-foreground rounded-full p-1" style={{ background: 'none', border: 'none', boxShadow: 'none', backdropFilter: 'none' }}>
                     <IconX size={13} />
                   </button>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            <div className="flex items-end gap-2.5">
+            <div className="flex items-center gap-2.5">
               <UserAvatar user={user as any} size="xs" />
-              <div className="flex-1 flex items-end gap-2 border border-input rounded-full px-4 py-2.5 min-h-[38px] bg-input/20 focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30 transition-colors">
+              <div className="relative flex-1">
                 <textarea
                   ref={inputRef}
                   value={text}
@@ -350,14 +350,15 @@ export function CommentsModal({
                   }}
                   placeholder="Add a comment…"
                   rows={1}
-                  className="flex-1 bg-transparent text-sm resize-none focus:outline-none placeholder:text-muted-foreground leading-snug max-h-24 overflow-y-auto"
+                  className="w-full rounded-full border border-input bg-input/20 pl-4 pr-10 py-2.5 text-sm resize-none focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 placeholder:text-muted-foreground leading-snug max-h-24 overflow-y-auto transition-colors dark:bg-input/30"
                   style={{ scrollbarWidth: 'none' }}
                 />
                 <motion.button
                   whileTap={{ scale: 0.88 }}
                   onClick={handleSubmit}
                   disabled={!text.trim() || submitting}
-                  className="flex-shrink-0 text-foreground disabled:text-muted-foreground/40 transition-colors pb-0.5"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 flex-shrink-0 text-foreground disabled:text-muted-foreground/40 transition-colors rounded-full p-1"
+                  style={{ background: 'none', border: 'none', boxShadow: 'none', backdropFilter: 'none' }}
                 >
                   {submitting ? (
                     <motion.div
