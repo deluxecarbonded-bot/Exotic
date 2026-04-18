@@ -7,6 +7,7 @@ export default [
     route("profile/:username", "routes/profile.$username.tsx"),
     route("notifications", "routes/notifications.tsx"),
     route("settings", "routes/settings.tsx"),
+    route("plugins", "routes/plugins.tsx"),
     route("search", "routes/search.tsx"),
     route("live", "routes/live.tsx"),
     route("live/:streamId", "routes/live.$streamId.tsx"),

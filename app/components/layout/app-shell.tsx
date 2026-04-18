@@ -15,6 +15,7 @@ import {
   IconRadio,
   IconCrown,
   IconMegaphone,
+  IconPuzzle,
 } from '~/components/icons';
 import { useThemeStore } from '~/stores/theme-store';
 import { useNotificationStore } from '~/stores/notification-store';
@@ -42,6 +43,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     { path: '/notifications', icon: IconBell, label: 'Notifications' },
     { path: '/profile/me', icon: IconUser, label: 'Profile' },
     ...(user?.is_owner ? [{ path: '/owner-dashboard', icon: IconCrown, label: 'Owner' }] : []),
+    { path: '/plugins', icon: IconPuzzle, label: 'Plugins' },
     { path: '/settings', icon: IconSettings, label: 'Settings' },
   ];
 

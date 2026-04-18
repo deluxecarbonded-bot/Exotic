@@ -458,7 +458,7 @@ html.liquid-glass.dark .glass-auth-card {
 }
 
 /* ──────────────────────────────────────────────────
-   3. BUTTONS — real Liquid Glass
+   3. BUTTONS — real Exotic Glass
 ────────────────────────────────────────────────── */
 
 /* Base + every interactive state — override ALL possible bg classes */
@@ -615,7 +615,7 @@ html.liquid-glass.dark .ask-btn:active {
 }
 
 /* ──────────────────────────────────────────────────
-   4. INPUTS, TEXTAREAS, SELECTS — Liquid Glass
+   4. INPUTS, TEXTAREAS, SELECTS — Exotic Glass
 ────────────────────────────────────────────────── */
 html.liquid-glass input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
 html.liquid-glass [data-slot="input"],
@@ -742,7 +742,7 @@ html.liquid-glass.dark [role="tab"][data-state="active"] {
 }
 
 /* ──────────────────────────────────────────────────
-   8. SWITCHES — real Liquid Glass
+   8. SWITCHES — real Exotic Glass
 ────────────────────────────────────────────────── */
 html.liquid-glass [data-slot="switch"][data-state="unchecked"],
 html.liquid-glass [data-slot="switch"][data-state="checked"] {
@@ -880,7 +880,7 @@ html.liquid-glass.dark .anon-avatar {
   transition: color 0.35s ease, filter 0.35s ease;
 }
 
-/* Liquid glass mode — frosted look on the SVG icon itself */
+/* Exotic glass mode — frosted look on the SVG icon itself */
 html.liquid-glass .logo-icon {
   filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.10));
 }
@@ -975,7 +975,7 @@ html.liquid-glass .glass-toast {
 }
 
 /* ──────────────────────────────────────────────────
-   16. TOAST NOTIFICATIONS — liquid glass pill
+   16. TOAST NOTIFICATIONS — exotic glass pill
 ────────────────────────────────────────────────── */
 html.liquid-glass .glass-toast {
   backdrop-filter: blur(32px) saturate(200%);

@@ -30,6 +30,7 @@ import {
 import { UserAvatar } from "~/components/user-avatar";
 import { useAuthStore } from "~/stores/auth-store";
 import { useThemeStore } from "~/stores/theme-store";
+import { usePluginStore } from "~/stores/plugin-store";
 import { supabase } from "~/lib/supabase";
 import type { ThemeMode } from "~/types";
 
@@ -123,6 +124,7 @@ function StatusBanner({
 export default function Settings() {
   const { user, updateProfile, logout } = useAuthStore();
   const { mode, setMode, liquidGlass, setLiquidGlass } = useThemeStore();
+  const exoticGlassInstalled = usePluginStore((s) => s.isInstalled('exotic-glass'));
   const navigate = useNavigate();
 
   // Profile
@@ -809,19 +811,21 @@ export default function Settings() {
               ))}
             </div>
 
-            {/* Liquid Glass */}
-            <div className="mt-4 flex items-center justify-between rounded-full bg-muted/50 px-4 py-3">
-              <div>
-                <p className="text-sm font-medium">Liquid Glass</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Frosted-glass surfaces throughout the app
-                </p>
+            {/* Exotic Glass — only if plugin installed */}
+            {exoticGlassInstalled && (
+              <div className="mt-4 flex items-center justify-between rounded-full bg-muted/50 px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium">Exotic Glass</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Frosted-glass surfaces throughout the app
+                  </p>
+                </div>
+                <Switch
+                  checked={liquidGlass}
+                  onCheckedChange={setLiquidGlass}
+                />
               </div>
-              <Switch
-                checked={liquidGlass}
-                onCheckedChange={setLiquidGlass}
-              />
-            </div>
+            )}
           </section>
 
           <Separator />
