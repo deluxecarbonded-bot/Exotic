@@ -238,7 +238,7 @@ function CreatePostForm({ onCreated }: { onCreated: () => void }) {
 
 export default function PostsPage() {
   const { user } = useAuthStore();
-  const { posts, isLoading, fetchPosts, checkLikes } = usePostStore();
+  const { posts, isLoading, fetchPosts, checkLikes, subscribeRealtime, unsubscribe } = usePostStore();
   const { following, fetchFollowing } = useFollowStore();
 
   useEffect(() => {
@@ -249,6 +249,8 @@ export default function PostsPage() {
         checkLikes(user.id);
       });
     });
+    subscribeRealtime();
+    return () => unsubscribe();
   }, [user?.id]);
 
   const handleRefresh = () => {

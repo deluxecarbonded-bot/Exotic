@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
 import { motion } from 'framer-motion';
 import { supabase } from '~/lib/supabase';
 import { useAuthStore } from '~/stores/auth-store';
-import { usePostStore } from '~/stores/post-store';
 import { PostCard } from '~/components/cards';
 import { IconArrowLeft } from '~/components/icons';
 import type { Post } from '~/types';
@@ -17,7 +16,35 @@ export default function PostPage() {
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    if (id) fetchPost();
+    if (!id) return;
+    fetchPost();
+
+    // Real-time: update this post's likes/content live
+    const postChannel = supabase
+      .channel(`post-detail-${id}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'posts', filter: `id=eq.${id}` }, (payload) => {
+        setPost(p => p ? { ...p, ...payload.new, user: p.user } as Post : p);
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'posts', filter: `id=eq.${id}` }, () => {
+        setNotFound(true);
+        setPost(null);
+      })
+      .subscribe();
+
+    const likesChannel = supabase
+      .channel(`post-likes-detail-${id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'post_likes', filter: `post_id=eq.${id}` }, () => {
+        setPost(p => p ? { ...p, likes_count: p.likes_count + 1 } : p);
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'post_likes', filter: `post_id=eq.${id}` }, () => {
+        setPost(p => p ? { ...p, likes_count: Math.max(0, p.likes_count - 1) } : p);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(postChannel);
+      supabase.removeChannel(likesChannel);
+    };
   }, [id, user?.id]);
 
   async function fetchPost() {

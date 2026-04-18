@@ -97,8 +97,8 @@ function MixedFeedList({ answers, posts, username }: { answers: Answer[]; posts:
 
 export default function HomePage() {
   const { user } = useAuthStore();
-  const { feed, isLoading, fetchFeed, checkLikes } = useQuestionStore();
-  const { posts, isLoading: postsLoading, fetchPosts, checkLikes: checkPostLikes } = usePostStore();
+  const { feed, isLoading, fetchFeed, checkLikes, subscribeRealtime: subscribeQuestions, unsubscribe: unsubscribeQuestions } = useQuestionStore();
+  const { posts, isLoading: postsLoading, fetchPosts, checkLikes: checkPostLikes, subscribeRealtime: subscribePosts, unsubscribe: unsubscribePosts } = usePostStore();
   const { following, fetchFollowing } = useFollowStore();
   const liveCount = useLiveStore((s) => s.liveCount);
   const [activeTab, setActiveTab] = useState("for-you");
@@ -111,6 +111,12 @@ export default function HomePage() {
       fetchFeed(idsWithSelf).then(() => checkLikes(user.id));
       fetchPosts(idsWithSelf).then(() => checkPostLikes(user.id));
     });
+    subscribePosts();
+    subscribeQuestions();
+    return () => {
+      unsubscribePosts();
+      unsubscribeQuestions();
+    };
   }, [user?.id]);
 
   const forYouAnswers = useMemo(() => feed, [feed]);

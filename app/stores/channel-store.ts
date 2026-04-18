@@ -1,11 +1,14 @@
 import { create } from 'zustand';
 import { supabase } from '~/lib/supabase';
 import type { Channel, ChannelPost } from '~/types';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 interface ChannelState {
   channels: Channel[];
   subscribedChannels: Channel[];
   isLoading: boolean;
+  _listChannels: RealtimeChannel[];
+  _detailChannels: RealtimeChannel[];
 
   fetchChannels: (userId?: string) => Promise<void>;
   fetchSubscribed: (userId: string) => Promise<void>;
@@ -22,12 +25,28 @@ interface ChannelState {
   pinPost: (postId: string, pinned: boolean) => Promise<void>;
   reactToPost: (postId: string, userId: string, emoji: string) => Promise<void>;
   removeReaction: (postId: string, userId: string, emoji: string) => Promise<void>;
+
+  // Real-time
+  subscribeChannelsList: (userId?: string) => void;
+  subscribeChannelDetail: (
+    channelId: string,
+    userId: string | undefined,
+    onNewPost: (post: ChannelPost) => void,
+    onDeletePost: (postId: string) => void,
+    onUpdatePost: (post: Partial<ChannelPost> & { id: string }) => void,
+    onReactionChange: (postId: string) => void,
+    onMemberChange: () => void
+  ) => void;
+  unsubscribeChannelsList: () => void;
+  unsubscribeChannelDetail: () => void;
 }
 
 export const useChannelStore = create<ChannelState>((set, get) => ({
   channels: [],
   subscribedChannels: [],
   isLoading: false,
+  _listChannels: [],
+  _detailChannels: [],
 
   fetchChannels: async (userId) => {
     set({ isLoading: true });
@@ -93,7 +112,6 @@ export const useChannelStore = create<ChannelState>((set, get) => ({
       .single();
     if (error || !data) return null;
 
-    // Auto-subscribe owner as owner
     await supabase.from('channel_members').insert({ channel_id: data.id, user_id: ownerId, role: 'owner' });
     const channel = { ...data, is_subscribed: true, member_role: 'owner' } as Channel;
     set(s => ({ channels: [channel, ...s.channels], subscribedChannels: [channel, ...s.subscribedChannels] }));
@@ -110,7 +128,6 @@ export const useChannelStore = create<ChannelState>((set, get) => ({
 
   subscribe: async (channelId, userId) => {
     await supabase.from('channel_members').insert({ channel_id: channelId, user_id: userId, role: 'member' });
-    // increment count
     await supabase.rpc('increment_channel_subscribers', { cid: channelId }).catch(() => {});
     set(s => ({
       channels: s.channels.map(c => c.id === channelId ? { ...c, is_subscribed: true, member_role: 'member', subscribers_count: c.subscribers_count + 1 } : c),
@@ -177,5 +194,129 @@ export const useChannelStore = create<ChannelState>((set, get) => ({
 
   removeReaction: async (postId, userId, emoji) => {
     await supabase.from('channel_post_reactions').delete().match({ post_id: postId, user_id: userId, emoji });
+  },
+
+  // ─── Real-time: channels list ───────────────────────────────────────────────
+  subscribeChannelsList: (userId) => {
+    get().unsubscribeChannelsList();
+
+    const ch = supabase
+      .channel('channels-list-realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'channels' }, async (payload) => {
+        const { data } = await supabase
+          .from('channels')
+          .select('*, owner:profiles!channels_owner_id_fkey(id,username,display_name,avatar_url,is_verified,is_owner)')
+          .eq('id', payload.new.id)
+          .single();
+        if (data) {
+          const enriched = userId ? { ...data, is_subscribed: false, member_role: null } : data;
+          set(s => ({
+            channels: s.channels.some(c => c.id === data.id) ? s.channels : [enriched as Channel, ...s.channels],
+          }));
+        }
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'channels' }, (payload) => {
+        set(s => ({
+          channels: s.channels.map(c => c.id === payload.new.id ? { ...c, ...payload.new } : c),
+          subscribedChannels: s.subscribedChannels.map(c => c.id === payload.new.id ? { ...c, ...payload.new } : c),
+        }));
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'channels' }, (payload) => {
+        set(s => ({
+          channels: s.channels.filter(c => c.id !== payload.old.id),
+          subscribedChannels: s.subscribedChannels.filter(c => c.id !== payload.old.id),
+        }));
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'channel_members' }, async (payload) => {
+        // If the current user just got added somewhere, refresh subscribed list
+        if (userId && payload.new.user_id === userId) {
+          const { data } = await supabase
+            .from('channels')
+            .select('*, owner:profiles!channels_owner_id_fkey(id,username,display_name,avatar_url,is_verified,is_owner)')
+            .eq('id', payload.new.channel_id)
+            .single();
+          if (data) {
+            const enriched = { ...data, is_subscribed: true, member_role: payload.new.role } as Channel;
+            set(s => ({
+              subscribedChannels: s.subscribedChannels.some(c => c.id === data.id)
+                ? s.subscribedChannels
+                : [enriched, ...s.subscribedChannels],
+              channels: s.channels.map(c => c.id === data.id ? { ...c, is_subscribed: true, member_role: payload.new.role, subscribers_count: c.subscribers_count + 1 } : c),
+            }));
+          }
+        } else {
+          // update subscriber count
+          set(s => ({
+            channels: s.channels.map(c => c.id === payload.new.channel_id ? { ...c, subscribers_count: c.subscribers_count + 1 } : c),
+          }));
+        }
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'channel_members' }, (payload) => {
+        if (userId && payload.old.user_id === userId) {
+          set(s => ({
+            subscribedChannels: s.subscribedChannels.filter(c => c.id !== payload.old.channel_id),
+            channels: s.channels.map(c => c.id === payload.old.channel_id ? { ...c, is_subscribed: false, member_role: null, subscribers_count: Math.max(0, c.subscribers_count - 1) } : c),
+          }));
+        } else {
+          set(s => ({
+            channels: s.channels.map(c => c.id === payload.old.channel_id ? { ...c, subscribers_count: Math.max(0, c.subscribers_count - 1) } : c),
+          }));
+        }
+      })
+      .subscribe();
+
+    set({ _listChannels: [ch] });
+  },
+
+  // ─── Real-time: channel detail (posts / reactions / members) ────────────────
+  subscribeChannelDetail: (channelId, userId, onNewPost, onDeletePost, onUpdatePost, onReactionChange, onMemberChange) => {
+    get().unsubscribeChannelDetail();
+
+    const postsChannel = supabase
+      .channel(`channel-posts-${channelId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'channel_posts', filter: `channel_id=eq.${channelId}` }, async (payload) => {
+        const { data } = await supabase
+          .from('channel_posts')
+          .select('*, user:profiles!channel_posts_user_id_fkey(id,username,display_name,avatar_url,is_verified,is_owner)')
+          .eq('id', payload.new.id)
+          .single();
+        if (data) onNewPost({ ...data, my_reaction: null, reactions: [] } as ChannelPost);
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'channel_posts', filter: `channel_id=eq.${channelId}` }, (payload) => {
+        onDeletePost(payload.old.id);
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'channel_posts', filter: `channel_id=eq.${channelId}` }, (payload) => {
+        onUpdatePost(payload.new as Partial<ChannelPost> & { id: string });
+      })
+      .subscribe();
+
+    const reactionsChannel = supabase
+      .channel(`channel-reactions-${channelId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'channel_post_reactions' }, (payload) => {
+        onReactionChange(payload.new.post_id);
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'channel_post_reactions' }, (payload) => {
+        onReactionChange(payload.old.post_id);
+      })
+      .subscribe();
+
+    const membersChannel = supabase
+      .channel(`channel-members-${channelId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'channel_members', filter: `channel_id=eq.${channelId}` }, () => onMemberChange())
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'channel_members', filter: `channel_id=eq.${channelId}` }, () => onMemberChange())
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'channel_members', filter: `channel_id=eq.${channelId}` }, () => onMemberChange())
+      .subscribe();
+
+    set({ _detailChannels: [postsChannel, reactionsChannel, membersChannel] });
+  },
+
+  unsubscribeChannelsList: () => {
+    get()._listChannels.forEach(ch => supabase.removeChannel(ch));
+    set({ _listChannels: [] });
+  },
+
+  unsubscribeChannelDetail: () => {
+    get()._detailChannels.forEach(ch => supabase.removeChannel(ch));
+    set({ _detailChannels: [] });
   },
 }));

@@ -262,9 +262,14 @@ function ChannelsSidebar({ onCreateChannel }: { onCreateChannel: () => void }) {
 // ─── Layout ─────────────────────────────────────────────────────────────────────
 export default function ChannelsLayout() {
   const [showCreate, setShowCreate] = useState(false);
-  const { fetchSubscribed, subscribedChannels } = useChannelStore();
+  const { fetchSubscribed, subscribedChannels, subscribeChannelsList, unsubscribeChannelsList } = useChannelStore();
   const { user } = useAuthStore();
   const params = useParams<{ handle?: string }>();
+
+  useEffect(() => {
+    subscribeChannelsList(user?.id);
+    return () => unsubscribeChannelsList();
+  }, [user?.id]);
 
   const handleChannelCreated = (c: Channel) => {
     setShowCreate(false);

@@ -467,7 +467,7 @@ export default function ChannelDetailPage() {
   const { handle } = useParams<{ handle: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { subscribe, unsubscribe, deleteChannel, deletePost, pinPost, reactToPost, removeReaction } = useChannelStore();
+  const { subscribe, unsubscribe, deleteChannel, deletePost, pinPost, reactToPost, removeReaction, subscribeChannelDetail, unsubscribeChannelDetail } = useChannelStore();
 
   const [channel, setChannel] = useState<Channel | null>(null);
   const [posts, setPosts] = useState<(ChannelPost & { posted_as?: 'channel' | 'user' })[]>([]);
@@ -484,6 +484,59 @@ export default function ChannelDetailPage() {
   }, []);
 
   useEffect(() => { if (handle) loadChannel(); }, [handle, user?.id]);
+
+  // Wire real-time once channel is loaded
+  useEffect(() => {
+    if (!channel?.id) return;
+    subscribeChannelDetail(
+      channel.id,
+      user?.id,
+      // onNewPost
+      (newPost) => {
+        setPosts(ps => ps.some(p => p.id === newPost.id) ? ps : [...ps, newPost as any]);
+        setTimeout(() => feedEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+      },
+      // onDeletePost
+      (postId) => setPosts(ps => ps.filter(p => p.id !== postId)),
+      // onUpdatePost
+      (updated) => setPosts(ps => ps.map(p => p.id === updated.id ? { ...p, ...updated } : p)),
+      // onReactionChange — re-fetch reactions for that post
+      async (postId) => {
+        const { data } = await supabase
+          .from('channel_post_reactions')
+          .select('emoji')
+          .eq('post_id', postId);
+        const countMap = new Map<string, number>();
+        (data ?? []).forEach((r: any) => countMap.set(r.emoji, (countMap.get(r.emoji) ?? 0) + 1));
+        const reactions = Array.from(countMap.entries()).map(([emoji, count]) => ({ emoji, count }));
+        // Re-fetch user's own reaction
+        let myReaction: string | null = null;
+        if (user?.id) {
+          const { data: mine } = await supabase
+            .from('channel_post_reactions')
+            .select('emoji')
+            .match({ post_id: postId, user_id: user.id })
+            .maybeSingle();
+          myReaction = mine?.emoji ?? null;
+        }
+        setPosts(ps => ps.map(p => p.id === postId ? { ...p, reactions, my_reaction: myReaction } : p));
+      },
+      // onMemberChange
+      async () => {
+        const { data: mems } = await supabase
+          .from('channel_members')
+          .select('*, user:profiles!channel_members_user_id_fkey(id,username,display_name,avatar_url,is_verified,is_owner)')
+          .eq('channel_id', channel.id)
+          .order('role')
+          .limit(50);
+        setMembers((mems ?? []) as ChannelMember[]);
+        // Update subscriber count on channel
+        const { data: ch } = await supabase.from('channels').select('subscribers_count').eq('id', channel.id).single();
+        if (ch) setChannel(c => c ? { ...c, subscribers_count: ch.subscribers_count } : c);
+      }
+    );
+    return () => unsubscribeChannelDetail();
+  }, [channel?.id]);
 
   // Scroll to bottom when posts first load
   useEffect(() => {
