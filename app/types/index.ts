@@ -62,13 +62,19 @@ export interface Comment {
 
 export interface Notification {
   id: string;
-  type: 'question_received' | 'answer_posted' | 'follow' | 'like' | 'comment' | 'mention' | 'live_stream' | 'post_like' | 'post_comment';
+  type:
+    | 'question_received' | 'answer_posted' | 'follow' | 'like' | 'comment'
+    | 'mention' | 'live_stream' | 'post_like' | 'post_comment'
+    | 'channel_new_post' | 'channel_post_comment' | 'channel_comment_reply'
+    | 'channel_post_reaction' | 'channel_member_joined' | 'channel_role_changed'
+    | 'channel_post_pinned';
   actor_id: string;
   actor: User | null;
   target_id: string;
-  target_type: 'question' | 'answer' | 'comment' | 'user' | 'live_stream' | 'post';
+  target_type: 'question' | 'answer' | 'comment' | 'user' | 'live_stream' | 'post' | 'channel_post' | 'channel';
   message: string;
   is_read: boolean;
+  channel_id: string | null;
   created_at: string;
 }
 

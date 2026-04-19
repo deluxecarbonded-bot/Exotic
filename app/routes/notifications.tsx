@@ -17,6 +17,9 @@ import {
   IconMail,
   IconImage,
   IconRadio,
+  IconChannel,
+  IconPin,
+  IconMegaphone,
 } from "~/components/icons";
 import { useNotificationStore } from "~/stores/notification-store";
 import { useFollowStore } from "~/stores/follow-store";
@@ -48,6 +51,19 @@ function getNotificationIcon(type: Notification["type"]) {
       return IconMessageCircle;
     case "live_stream":
       return IconRadio;
+    case "channel_new_post":
+      return IconMegaphone;
+    case "channel_post_comment":
+    case "channel_comment_reply":
+      return IconMessageCircle;
+    case "channel_post_reaction":
+      return IconHeart;
+    case "channel_member_joined":
+      return IconUser;
+    case "channel_role_changed":
+      return IconChannel;
+    case "channel_post_pinned":
+      return IconPin;
     default:
       return IconBell;
   }
@@ -72,6 +88,17 @@ function getNotificationLink(notification: Notification): string {
       return "/";
     case "live_stream":
       return `/live/${notification.target_id}`;
+    case "channel_new_post":
+    case "channel_post_comment":
+    case "channel_comment_reply":
+    case "channel_post_reaction":
+    case "channel_post_pinned":
+      // target_id is the post id, but we link to the channel
+      // The channel_id is available on the notification
+      return "/channels";
+    case "channel_member_joined":
+    case "channel_role_changed":
+      return "/channels";
     default:
       return "/notifications";
   }
@@ -91,7 +118,7 @@ function formatTimeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString();
 }
 
-type FilterTab = "all" | "questions" | "follows" | "likes" | "posts" | "mentions";
+type FilterTab = "all" | "questions" | "follows" | "likes" | "posts" | "mentions" | "channels";
 
 function filterNotifications(
   notifications: Notification[],
@@ -117,6 +144,17 @@ function filterNotifications(
     case "mentions":
       return notifications.filter(
         (n) => n.type === "mention" || n.type === "comment" || n.type === "post_comment"
+      );
+    case "channels":
+      return notifications.filter(
+        (n) =>
+          n.type === "channel_new_post" ||
+          n.type === "channel_post_comment" ||
+          n.type === "channel_comment_reply" ||
+          n.type === "channel_post_reaction" ||
+          n.type === "channel_member_joined" ||
+          n.type === "channel_role_changed" ||
+          n.type === "channel_post_pinned"
       );
     default:
       return notifications;
@@ -398,6 +436,10 @@ export default function Notifications() {
                 Comments
                 <TabBadge count={countForTab(notifications, "mentions")} />
               </TabsTrigger>
+              <TabsTrigger value="channels" className="flex-1 text-sm">
+                Channels
+                <TabBadge count={countForTab(notifications, "channels")} />
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -436,7 +478,7 @@ export default function Notifications() {
 
               {displayFiltered.length === 0 && !(activeTab === "follows" && hasRequests) ? (
                 <EmptyState
-                  icon={activeTab === "likes" ? IconHeart : activeTab === "posts" ? IconImage : activeTab === "follows" ? IconUser : activeTab === "questions" ? IconMessageCircle : IconBell}
+                  icon={activeTab === "likes" ? IconHeart : activeTab === "posts" ? IconImage : activeTab === "follows" ? IconUser : activeTab === "questions" ? IconMessageCircle : activeTab === "channels" ? IconChannel : IconBell}
                   title={`No ${activeTab === "all" ? "" : activeTab + " "}notifications`}
                   description={getEmptyDescription(activeTab)}
                 />
@@ -479,6 +521,8 @@ function getEmptyDescription(tab: FilterTab): string {
       return "When someone interacts with your posts, you'll see it here.";
     case "mentions":
       return "When someone comments on your content, you'll see it here.";
+    case "channels":
+      return "When there's activity in your channels, you'll see it here.";
     default:
       return "When someone interacts with you, you'll see it here.";
   }
